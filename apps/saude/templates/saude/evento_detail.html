@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ evento.titulo }} — Gestão Rural{% endblock %}
+{% block page_title %}Evento de saúde{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <a class="btn-app btn-ghost" href="{% url 'saude:eventos' %}">Voltar</a>
+  {% if evento.ativo_registro %}
+    <div class="btn-group">
+      <a class="btn-app btn-primary-app" href="{% url 'saude:evento_editar' evento.pk %}">Corrigir</a>
+      <a class="btn-app btn-danger-app" href="{% url 'saude:evento_cancelar' evento.pk %}">Cancelar</a>
+    </div>
+  {% endif %}
+</section>
+
+{% if evento.cancelado %}<div class="surface-card"><strong class="text-danger">Evento cancelado.</strong> O registro foi preservado no prontuário.</div>{% endif %}
+
+<section class="card-grid">
+  <article class="surface-card">
+    <p class="eyebrow">{{ evento.get_tipo_display }} · {{ evento.get_situacao_display }}</p>
+    <h2>{{ evento.titulo }}</h2>
+    <dl>
+      <dt>Animal</dt><dd>{{ evento.animal }}</dd>
+      <dt>Data e hora efetiva</dt><dd>{{ evento.data_hora|date:"d/m/Y H:i" }}</dd>
+      <dt>Descrição</dt><dd>{{ evento.descricao|linebreaksbr }}</dd>
+      <dt>Resultado/conclusão</dt><dd>{{ evento.resultado|default:"—"|linebreaksbr }}</dd>
+    </dl>
+  </article>
+  <article class="surface-card">
+    <h2>Responsabilidade e histórico</h2>
+    <dl>
+      <dt>Médico-veterinário</dt><dd>{{ evento.veterinario|default:"—" }}</dd>
+      <dt>Outro responsável</dt><dd>{{ evento.responsavel|default:"—" }}</dd>
+      <dt>Registrado em</dt><dd>{{ evento.criado_em|date:"d/m/Y H:i" }}</dd>
+      <dt>Última atualização</dt><dd>{{ evento.atualizado_em|date:"d/m/Y H:i" }}</dd>
+      {% if evento.motivo_correcao %}<dt>Justificativa da última correção</dt><dd>{{ evento.motivo_correcao|linebreaksbr }}</dd>{% endif %}
+      {% if evento.motivo_cancelamento %}<dt>Justificativa do cancelamento</dt><dd>{{ evento.motivo_cancelamento|linebreaksbr }}</dd><dt>Cancelado em</dt><dd>{{ evento.cancelado_em|date:"d/m/Y H:i" }}</dd>{% endif %}
+    </dl>
+  </article>
+</section>
+{% endblock %}

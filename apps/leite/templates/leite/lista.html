@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <p class="lead-copy">Registre o leite por turno ou informe o total consolidado dos 2 Turnos.</p>
+  <div class="btn-group">
+    <a class="btn-app btn-ghost" href="{% url 'relatorios:leite' %}">Ver relatório</a>
+    {% if nome_url_novo %}<a class="btn-app btn-primary-app" href="{% url nome_url_novo %}">Registrar leite</a>{% endif %}
+  </div>
+</section>
+{% if mostrar_filtro_datas %}
+<section class="surface-card">
+  <form class="filter-bar" method="get" hx-get="{{ request.path }}" hx-target="#lista-registros" hx-push-url="true" hx-trigger="change delay:250ms, submit">
+    <label>De <input class="form-control" type="date" name="data_inicial" value="{{ request.GET.data_inicial }}"></label>
+    <label>Até <input class="form-control" type="date" name="data_final" value="{{ request.GET.data_final }}"></label>
+    <button class="btn-app btn-primary-app" type="submit">Filtrar</button>
+  </form>
+</section>
+{% endif %}
+{% include "leite/_lista.html" %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% with pg=pagina|default:page_obj %}
+{% if pg.has_other_pages %}
+<nav class="pagination-app" aria-label="Paginação">
+  {% if pg.has_previous %}<a href="?page={{ pg.previous_page_number }}{% for chave, valor in request.GET.items %}{% if chave != 'page' %}&amp;{{ chave|urlencode }}={{ valor|urlencode }}{% endif %}{% endfor %}">← Anterior</a>{% else %}<span></span>{% endif %}
+  <span>Página {{ pg.number }} de {{ pg.paginator.num_pages }}</span>
+  {% if pg.has_next %}<a href="?page={{ pg.next_page_number }}{% for chave, valor in request.GET.items %}{% if chave != 'page' %}&amp;{{ chave|urlencode }}={{ valor|urlencode }}{% endif %}{% endfor %}">Próxima →</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% endwith %}

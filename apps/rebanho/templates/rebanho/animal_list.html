@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Rebanho — Gestão Rural{% endblock %}
+{% block page_title %}Rebanho{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <p class="lead-copy">Todo o seu gado em uma lista, com a foto de cada animal quando disponível.</p>
+  <div class="btn-group">
+    <a class="btn-app btn-ghost" href="{% url 'rebanho:bezerro_novo' %}">Cadastrar bezerro</a>
+    <a class="btn-app btn-primary-app" href="{% url 'rebanho:animal_novo' %}">Cadastrar animal</a>
+  </div>
+</section>
+
+<section class="metric-grid" aria-label="Resumo do rebanho">
+  <article class="metric-card"><span>Total</span><strong>{{ resumo.total }}</strong></article>
+  <article class="metric-card"><span>Fêmeas</span><strong>{{ resumo.femeas_ativas }}</strong></article>
+  <article class="metric-card"><span>Machos</span><strong>{{ resumo.machos_ativos }}</strong></article>
+</section>
+
+<form class="surface-card filter-bar" method="get" role="search" hx-get="{% url 'rebanho:animais' %}" hx-target="#animal-results" hx-push-url="true" hx-trigger="submit, input changed delay:400ms from:#q, change from:select">
+  <div class="form-grid">
+    <div class="field-wrap"><label for="q">Nome</label><input class="form-control" id="q" name="q" value="{{ filtros.q }}"></div>
+    <div class="field-wrap"><label for="sexo">Sexo</label><select class="form-select" id="sexo" name="sexo"><option value="">Todos</option>{% for valor, rotulo in sexos %}<option value="{{ valor }}" {% if filtros.sexo == valor %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="form-actions"><button class="btn-app btn-primary-app" type="submit">Filtrar</button><a class="btn-app btn-ghost" href="{% url 'rebanho:animais' %}">Limpar</a></div>
+</form>
+
+<div id="animal-results" aria-live="polite">
+  {% include "rebanho/partials/animal_cards.html" %}
+</div>
+{% endblock %}

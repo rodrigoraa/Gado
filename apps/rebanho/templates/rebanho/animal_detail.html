@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ animal }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ animal }}{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <a class="btn-app btn-ghost" href="{% url 'rebanho:animais' %}">Voltar</a>
+  <div class="btn-group">
+    <a class="btn-app btn-danger-app" href="{% url 'rebanho:animal_excluir' animal.pk %}">Excluir</a>
+    <a class="btn-app btn-primary-app" href="{% url 'rebanho:animal_editar' animal.pk %}">Editar</a>
+  </div>
+</section>
+
+<section class="card-grid">
+  <article class="surface-card">
+    {% if animal.foto %}<img class="animal-photo" src="{% url 'core:arquivo_privado' animal.foto.name %}" alt="Foto de {{ animal }}">{% endif %}
+    <h2>Dados</h2>
+    <dl>
+      <dt>Nome</dt><dd>{{ animal.nome }}</dd>
+      <dt>Cor</dt><dd>{{ animal.cor|default:"Não informada" }}</dd>
+      <dt>Sexo</dt><dd>{{ animal.get_sexo_display|default:"Não informado" }}</dd>
+      <dt>Mãe</dt><dd>{% if animal.mae %}<a href="{% url 'rebanho:animal_detalhe' animal.mae.pk %}">{{ animal.mae }}</a>{% else %}Não informada{% endif %}</dd>
+      <dt>Nascimento</dt><dd>{{ animal.data_nascimento|date:"d/m/Y"|default:"Não informado" }}</dd>
+    </dl>
+  </article>
+
+  <article class="surface-card">
+    <div class="section-heading">
+      <div><h2>Bezerros</h2><p>Animais ligados a esta mãe.</p></div>
+      {% if animal.sexo == 'F' %}<a class="btn-app btn-primary-app" href="{% url 'rebanho:bezerro_novo' %}?mae={{ animal.pk }}">Cadastrar bezerro</a>{% endif %}
+    </div>
+    <div class="list-stack">
+      {% for filho in filhos %}
+        <a class="list-card" href="{% url 'rebanho:animal_detalhe' filho.pk %}">
+          <strong>{{ filho }}</strong>
+          <small>{{ filho.get_sexo_display|default:"Sexo não informado" }}</small>
+        </a>
+      {% empty %}
+        <p class="lead-copy">Nenhum bezerro ligado a este animal.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+{% if animal.sexo == 'F' %}
+<section class="surface-card">
+  <div class="section-heading">
+    <div><h2>Coberturas</h2><p>Datas registradas e possíveis nascimentos.</p></div>
+    <a class="btn-app btn-primary-app" href="{% url 'reproducao:cobertura_nova' %}?vaca={{ animal.pk }}">Registrar cobertura</a>
+  </div>
+  <div class="card-grid">
+    {% for cobertura in coberturas %}
+      <a class="list-card" href="{% url 'reproducao:cobertura_detalhe' cobertura.pk %}">
+        <div><strong>{{ cobertura.data|date:"d/m/Y" }}</strong><p>Boi: {{ cobertura.touro|default:"Não informado" }}</p></div>
+        <small>Possível nascimento: {{ cobertura.previsao_atual_parto|date:"d/m/Y" }}</small>
+      </a>
+    {% empty %}
+      <p class="lead-copy">Nenhuma cobertura registrada para esta vaca.</p>
+    {% endfor %}
+  </div>
+</section>
+{% elif animal.sexo == 'M' %}
+<section class="surface-card">
+  <div class="section-heading">
+    <div>
+      <h2>Coberturas deste boi</h2>
+      <p>Vacas cobertas e datas registradas.</p>
+    </div>
+    <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas_por_touro' %}?q={{ animal.nome|urlencode }}">Ver coberturas por boi</a>
+  </div>
+  <div class="card-grid">
+    {% for cobertura in coberturas_como_touro %}
+      <a class="list-card" href="{% url 'reproducao:cobertura_detalhe' cobertura.pk %}">
+        <strong>{{ cobertura.vaca }}</strong>
+        <small>{{ cobertura.data|date:"d/m/Y" }}</small>
+      </a>
+    {% empty %}
+      <p class="lead-copy">Nenhuma cobertura registrada para este boi.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

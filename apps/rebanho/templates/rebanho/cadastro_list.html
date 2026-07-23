@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<section class="page-actions"><a class="btn-app btn-ghost" href="{% url 'rebanho:animais' %}">Voltar ao rebanho</a><a class="btn-app btn-primary-app" href="{% url nome_url_novo %}">Novo cadastro</a></section>
+<section class="card-grid">
+  {% for objeto in objetos %}<article class="surface-card list-card"><div><strong>{{ objeto }}</strong><p class="mb-0">{{ objeto.descricao|default:"Sem descrição" }}</p></div><a class="btn-app btn-ghost" href="{% url nome_url_editar objeto.pk %}">Editar</a></article>{% empty %}<article class="surface-card empty-state"><h2>Nenhum registro</h2></article>{% endfor %}
+</section>
+{% include "shared/pagination.html" %}
+{% endblock %}
+

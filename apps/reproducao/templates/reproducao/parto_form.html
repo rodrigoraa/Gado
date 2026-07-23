@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+  <section class="surface-card form-card"><h2>Dados do parto</h2>{% include "shared/form_fields.html" with form=form %}</section>
+  <section class="surface-card form-card" data-bezerro-formset data-max-forms="5">
+    <div class="section-heading">
+      <div><h2>Bezerros</h2><p>Informe o nome de cada cria. Cor, foto e sexo são opcionais; mãe e data de nascimento vêm deste parto.</p></div>
+      <button class="btn-app btn-ghost" id="adicionar-bezerro" type="button">Adicionar bezerro</button>
+    </div>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="form-alert">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="card-grid" id="bezerro-forms">
+      {% for form_bezerro in formset %}
+        <article class="surface-card formset-card" data-bezerro-form>
+          <h3 data-bezerro-title>Bezerro {{ forloop.counter }}</h3>
+          {% include "shared/form_fields.html" with form=form_bezerro %}
+        </article>
+      {% endfor %}
+    </div>
+    <template id="bezerro-empty-form">
+      <article class="surface-card formset-card" data-bezerro-form>
+        <h3 data-bezerro-title>Novo bezerro</h3>
+        {% with form_bezerro=formset.empty_form %}{% include "shared/form_fields.html" with form=form_bezerro %}{% endwith %}
+      </article>
+    </template>
+    <p class="text-muted" id="limite-bezerros" hidden>O limite é de cinco bezerros por parto.</p>
+  </section>
+  <div class="form-actions"><a class="btn-app btn-ghost" href="{% url 'reproducao:partos' %}">Voltar</a><button class="btn-app btn-primary-app" type="submit">Registrar tudo</button></div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const formset = document.querySelector("[data-bezerro-formset]");
+  const template = document.getElementById("bezerro-empty-form");
+  const container = document.getElementById("bezerro-forms");
+  const addButton = document.getElementById("adicionar-bezerro");
+  if (!formset || !template || !container || !addButton) return;
+
+  const totalInput = formset.querySelector("input[name$='-TOTAL_FORMS']");
+  if (!totalInput) return;
+  const maxForms = Number.parseInt(formset.dataset.maxForms || "5", 10);
+  const limitMessage = document.getElementById("limite-bezerros");
+
+  function updateState() {
+    const total = Number.parseInt(totalInput.value, 10);
+    const reachedLimit = total >= maxForms;
+    addButton.disabled = reachedLimit;
+    if (limitMessage) limitMessage.hidden = !reachedLimit;
+  }
+
+  addButton.addEventListener("click", function () {
+    const total = Number.parseInt(totalInput.value, 10);
+    if (total >= maxForms) return;
+    const html = template.innerHTML.replaceAll("__prefix__", String(total));
+    container.insertAdjacentHTML("beforeend", html);
+    totalInput.value = String(total + 1);
+    const added = container.lastElementChild;
+    const title = added && added.querySelector("[data-bezerro-title]");
+    if (title) title.textContent = `Bezerro ${total + 1}`;
+    updateState();
+  });
+
+  updateState();
+});
+</script>
+{% endblock %}

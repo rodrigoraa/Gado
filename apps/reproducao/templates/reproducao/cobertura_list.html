@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Reprodução — Gestão Rural{% endblock %}
+{% block page_title %}Coberturas{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <p class="lead-copy">Data da cobertura e possível nascimento do bezerro.</p>
+  <div class="btn-group">
+    <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas_por_touro' %}">Coberturas por boi</a>
+    <a class="btn-app btn-primary-app" href="{% url 'reproducao:cobertura_nova' %}">Registrar cobertura</a>
+  </div>
+</section>
+<form class="surface-card filter-bar" method="get" hx-get="{% url 'reproducao:coberturas' %}" hx-target="#cobertura-results" hx-push-url="true" hx-trigger="submit, input changed delay:400ms from:#q"><input class="form-control" id="q" name="q" value="{{ filtros.q }}" placeholder="Nome da vaca ou do boi"><button class="btn-app btn-primary-app">Buscar</button><a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas' %}">Limpar</a></form>
+<div id="cobertura-results" aria-live="polite">
+  {% include "reproducao/partials/cobertura_cards.html" %}
+</div>
+{% endblock %}

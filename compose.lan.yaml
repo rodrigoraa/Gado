@@ -1,0 +1,46 @@
+# Override opcional. Não use sem confirmar que LAN_BIND_ADDRESS é um IP privado
+# atribuído ao servidor e que o firewall restringe a porta à rede local.
+services:
+  lan-proxy:
+    image: caddy:2.10-alpine
+    profiles:
+      - lan
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Defina APP_DOMAIN no arquivo .env}
+      LAN_BIND_ADDRESS: ${LAN_BIND_ADDRESS:?Defina LAN_BIND_ADDRESS com um IP privado}
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |-
+        case "$${LAN_BIND_ADDRESS}" in
+          10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.3[01].*) ;;
+          *) echo "LAN_BIND_ADDRESS deve ser um IPv4 privado RFC 1918." >&2; exit 64 ;;
+        esac
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "${LAN_BIND_ADDRESS:?Defina LAN_BIND_ADDRESS com o IP privado do servidor}:${LAN_PORT:-8080}:80"
+    volumes:
+      - ./deployment/Caddyfile:/etc/caddy/Caddyfile:ro
+      - static_data:/srv/static:ro
+    read_only: true
+    tmpfs:
+      - /config:size=8m,mode=0700
+      - /data:size=8m,mode=0700
+      - /tmp:size=8m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget --quiet --spider --header="Host: $${APP_DOMAIN}" http://127.0.0.1/health/ready/ || exit 1'
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - frontend

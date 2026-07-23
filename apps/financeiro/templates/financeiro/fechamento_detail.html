@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ fechamento }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ fechamento }}{% endblock %}
+{% block content %}
+<section class="page-actions"><a class="btn-app btn-ghost" href="{% url 'financeiro:fechamentos' %}">Voltar</a>{% if fechamento.ativo_registro %}<a class="btn-app btn-ghost" href="{% url 'financeiro:fechamento_editar' fechamento.pk %}">Conferir</a>{% if fechamento.situacao == 'ABERTO' %}<a class="btn-app btn-primary-app" href="{% url 'financeiro:fechamento_finalizar' fechamento.pk %}">Finalizar fechamento</a>{% endif %}{% endif %}</section>
+<section class="card-grid">
+  <article class="surface-card"><h2>Calculado</h2><dl><dt>Litros</dt><dd>{{ fechamento.total_litros_calculado }}</dd><dt>Bruto</dt><dd>R$ {{ fechamento.valor_bruto_calculado }}</dd><dt>Bonificações</dt><dd>R$ {{ fechamento.bonificacoes_calculadas }}</dd><dt>Descontos</dt><dd>R$ {{ fechamento.descontos_calculados }}</dd><dt>Líquido</dt><dd><strong>R$ {{ fechamento.valor_liquido_calculado }}</strong></dd></dl></article>
+  <article class="surface-card"><h2>Pagamento</h2><dl><dt>Situação</dt><dd>{{ fechamento.get_situacao_display }}</dd><dt>Recebido</dt><dd>R$ {{ fechamento.total_recebido }}</dd><dt>Saldo</dt><dd><strong>R$ {{ fechamento.saldo }}</strong></dd><dt>Previsão</dt><dd>{{ fechamento.data_prevista_pagamento|date:"d/m/Y"|default:"—" }}</dd></dl>{% if fechamento.situacao != 'ABERTO' and fechamento.situacao != 'PAGO' and fechamento.situacao != 'CANCELADO' %}<a class="btn-app btn-primary-app" href="{% url 'financeiro:recebimento_novo' %}?fechamento={{ fechamento.pk }}">Registrar recebimento</a>{% endif %}</article>
+</section>
+<section class="surface-card"><h2>Entregas incluídas</h2><div class="card-grid">{% for entrega in fechamento.entregas.all %}<a class="list-card" href="{% url 'financeiro:entrega_detalhe' entrega.pk %}">{{ entrega }}</a>{% empty %}<p>Nenhuma entrega.</p>{% endfor %}</div></section>
+{% if fechamento.arquivo_demonstrativo %}<section class="surface-card"><a class="btn-app btn-ghost" href="{% url 'financeiro:arquivo_privado' 'fechamento' fechamento.pk %}">Baixar demonstrativo</a></section>{% endif %}
+{% endblock %}

@@ -1,0 +1,38 @@
+{
+    auto_https off
+    admin off
+}
+
+:80 {
+    encode zstd gzip
+
+    @static path /static/*
+    handle @static {
+        uri strip_prefix /static
+        root * /srv/static
+        header Cache-Control "public, max-age=3600"
+        file_server
+    }
+
+    # /media não é servido pelo Caddy: documentos e fotos privados passam
+    # obrigatoriamente pelas views autenticadas do Django.
+    handle {
+        reverse_proxy web:8000 {
+            # Preserva o esquema HTTPS informado pela borda Cloudflare. Sem
+            # isso, o proxy interno HTTP pode causar loop em SECURE_SSL_REDIRECT.
+            header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+        }
+    }
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Frame-Options DENY
+    }
+
+    log {
+        output stdout
+        format json
+    }
+}

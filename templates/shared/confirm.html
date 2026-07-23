@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block page_title %}{{ titulo|default:'Confirmar operação' }}{% endblock %}
+{% block content %}
+<section class="content-narrow"><div class="surface-card confirm-card">
+  <div class="warning-icon">!</div><h2>{{ titulo|default:'Confirmar operação' }}</h2>
+  <p>{{ mensagem }}</p>
+  <form method="post">{% csrf_token %}{% if form %}{% include "shared/form_fields.html" with form=form %}{% endif %}
+    <div class="form-actions"><a class="btn-app btn-ghost" href="{% if voltar_url %}{{ voltar_url }}{% else %}{% url 'core:dashboard' %}{% endif %}">Voltar</a><button class="btn-app btn-danger-app">Confirmar</button></div>
+  </form>
+</div></section>
+{% endblock %}

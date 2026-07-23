@@ -1,0 +1,4 @@
+<section class="card-grid">
+  {% for cobertura in coberturas %}<article class="surface-card list-card"><div><h2>{{ cobertura.vaca }}</h2><p>Boi: {{ cobertura.touro|default:"Não informado" }} · Cobertura em {{ cobertura.data|date:"d/m/Y" }}</p>{% if cobertura.previsao_atual_parto %}<small>Possível nascimento: {{ cobertura.previsao_atual_parto|date:"d/m/Y" }}</small>{% endif %}</div><a class="btn-app btn-ghost" href="{% url 'reproducao:cobertura_detalhe' cobertura.pk %}">Ver</a></article>{% empty %}<article class="surface-card empty-state"><h2>Nenhuma cobertura encontrada</h2></article>{% endfor %}
+</section>
+{% include "shared/pagination.html" %}

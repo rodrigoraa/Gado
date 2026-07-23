@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Gestão Rural{% endblock %}
+{% block content %}
+<section class="login-shell">
+  <div class="login-visual">
+    <div class="login-badge">GR</div>
+    <p class="eyebrow">Dados seguros. Rotina simples.</p>
+    <h1>Seu rebanho inteiro,<br>na palma da mão.</h1>
+    <p>Reprodução, leite, saúde e financeiro conectados em um só lugar.</p>
+  </div>
+  <div class="login-card">
+    <div class="mobile-login-brand"><span>GR</span> Gestão Rural</div>
+    <p class="eyebrow">Acesso restrito</p>
+    <h2>Bem-vindo de volta</h2>
+    <p class="text-muted">Entre com seu usuário e senha.</p>
+    {% if form.errors %}<div class="form-alert">Usuário ou senha inválidos. Tente novamente.</div>{% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <div class="field-wrap">
+        <label for="id_username">Usuário</label>
+        <input id="id_username" name="username" type="text" autocomplete="username" autocapitalize="none" required autofocus>
+      </div>
+      <div class="field-wrap">
+        <label for="id_password">Senha</label>
+        <input id="id_password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn-app btn-primary-app w-100" type="submit">Entrar no sistema</button>
+    </form>
+    <small class="security-note">Acesso protegido por sessão e conexão HTTPS.</small>
+  </div>
+</section>
+{% endblock %}

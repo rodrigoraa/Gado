@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Coberturas por boi — Gestão Rural{% endblock %}
+{% block page_title %}Coberturas por boi{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <p class="lead-copy">Todas as coberturas realizadas por cada boi.</p>
+  <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas' %}">Ver todas as coberturas</a>
+</section>
+
+<form class="surface-card filter-bar bull-filter" method="get" role="search">
+  <input class="form-control" id="q" name="q" value="{{ filtros.q }}" placeholder="Nome do boi">
+  <button class="btn-app btn-primary-app" type="submit">Buscar</button>
+  <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas_por_touro' %}">Limpar</a>
+</form>
+
+{% if coberturas %}
+  <section class="surface-card table-surface" aria-label="Coberturas por boi">
+    <table class="responsive-table herd-table">
+      <thead>
+        <tr>
+          <th>Boi</th>
+          <th>Vaca</th>
+          <th>Data da cobertura</th>
+          <th>Possível nascimento</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cobertura in coberturas %}
+          <tr>
+            <td data-label="Boi">
+              <a class="animal-row" href="{% url 'rebanho:animal_detalhe' cobertura.touro.pk %}">
+                {% if cobertura.touro.foto %}
+                  <img class="animal-avatar" src="{% url 'core:arquivo_privado' cobertura.touro.foto.name %}" alt="Foto de {{ cobertura.touro.nome }}">
+                {% else %}
+                  <span class="animal-avatar animal-avatar-fallback" aria-hidden="true">🐂</span>
+                {% endif %}
+                <strong>{{ cobertura.touro.nome }}</strong>
+              </a>
+            </td>
+            <td data-label="Vaca">
+              <a href="{% url 'rebanho:animal_detalhe' cobertura.vaca.pk %}">{{ cobertura.vaca.nome }}</a>
+            </td>
+            <td data-label="Cobertura">{{ cobertura.data|date:"d/m/Y" }}</td>
+            <td data-label="Nascimento">{{ cobertura.previsao_atual_parto|date:"d/m/Y"|default:"Não calculado" }}</td>
+            <td data-label="">
+              <a class="btn-app btn-ghost" href="{% url 'reproducao:cobertura_detalhe' cobertura.pk %}">Ver</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% else %}
+  <article class="surface-card empty-state">
+    <h2>Nenhuma cobertura encontrada</h2>
+    <p>Registre uma cobertura informando o boi para ela aparecer aqui.</p>
+  </article>
+{% endif %}
+
+{% include "shared/pagination.html" %}
+{% endblock %}

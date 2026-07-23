@@ -1,0 +1,58 @@
+{% if animais %}
+  <section class="surface-card table-surface" aria-label="Lista do rebanho">
+    <table class="responsive-table herd-table">
+      <thead>
+        <tr>
+          <th>Animal</th>
+          <th>Sexo</th>
+          <th>Data de cobertura</th>
+          <th>Mãe</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for animal in animais %}
+          <tr>
+            <td data-label="Animal">
+              <a class="animal-row" href="{% url 'rebanho:animal_detalhe' animal.pk %}">
+                {% if animal.foto %}
+                  <img class="animal-avatar" src="{% url 'core:arquivo_privado' animal.foto.name %}" alt="Foto de {{ animal.identificador_exibicao }}">
+                {% else %}
+                  <span class="animal-avatar animal-avatar-fallback" aria-hidden="true">🐄</span>
+                {% endif %}
+                <span>
+                  <strong>{{ animal.identificador_exibicao }}</strong>
+                  <small>{{ animal.categoria }}</small>
+                </span>
+              </a>
+            </td>
+            <td data-label="Sexo">{{ animal.get_sexo_display|default:"Não informado" }}</td>
+            <td data-label="Cobertura">
+              {{ animal.data_ultima_cobertura|date:"d/m/Y"|default:"—" }}
+            </td>
+            <td data-label="Mãe">
+              {% if animal.mae %}
+                <a href="{% url 'rebanho:animal_detalhe' animal.mae.pk %}">{{ animal.mae.identificador_exibicao }}</a>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td data-label="Ações">
+              <div class="table-actions">
+                <a class="btn-app btn-ghost" href="{% url 'rebanho:animal_detalhe' animal.pk %}">Ver</a>
+                <a class="btn-app btn-ghost" href="{% url 'rebanho:animal_editar' animal.pk %}">Editar</a>
+                <a class="btn-app btn-danger-app" href="{% url 'rebanho:animal_excluir' animal.pk %}">Excluir</a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% else %}
+  <article class="surface-card empty-state">
+    <h2>Nenhum animal encontrado</h2>
+    <p>Ajuste os filtros ou faça o primeiro cadastro.</p>
+  </article>
+{% endif %}
+{% include "shared/pagination.html" %}

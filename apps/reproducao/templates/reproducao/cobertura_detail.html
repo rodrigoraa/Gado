@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Cobertura de {{ cobertura.vaca }} — Gestão Rural{% endblock %}
+{% block page_title %}Cobertura de {{ cobertura.vaca }}{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas' %}">Voltar</a>
+</section>
+<section class="card-grid">
+  <article class="surface-card">
+    <h2>Cobertura registrada</h2>
+    <dl>
+      <dt>Vaca</dt><dd><a href="{% url 'rebanho:animal_detalhe' cobertura.vaca.pk %}">{{ cobertura.vaca }}</a></dd>
+      <dt>Boi</dt><dd>{% if cobertura.touro %}<a href="{% url 'rebanho:animal_detalhe' cobertura.touro.pk %}">{{ cobertura.touro }}</a>{% else %}Não informado{% endif %}</dd>
+      <dt>Data da cobertura</dt><dd>{{ cobertura.data|date:"d/m/Y" }}</dd>
+    </dl>
+  </article>
+  <article class="surface-card">
+    <h2>Possível nascimento</h2>
+    <strong class="big-number">{{ cobertura.previsao_atual_parto|date:"d/m/Y" }}</strong>
+    <p class="lead-copy">Data aproximada calculada automaticamente.</p>
+  </article>
+</section>
+{% endblock %}

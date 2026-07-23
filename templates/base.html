@@ -1,0 +1,77 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173f35">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}Gestão Rural{% endblock %}</title>
+  <link href="{% static 'vendor/bootstrap.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260723-8">
+  <script defer src="{% static 'vendor/htmx.min.js' %}"></script>
+  <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
+  <script defer src="{% static 'vendor/chart.umd.min.js' %}"></script>
+  <script defer src="{% static 'js/app.js' %}"></script>
+  {% block head %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <a href="#conteudo" class="skip-link">Ir para o conteúdo</a>
+  {% if user.is_authenticated %}
+    <aside class="app-sidebar" aria-label="Navegação principal">
+      <a class="brand" href="{% url 'core:dashboard' %}" aria-label="Início">
+        <span class="brand-mark" aria-hidden="true">GR</span>
+        <span><strong>Gestão Rural</strong><small>{{ configuracao_global.nome_propriedade|default:'Propriedade leiteira' }}</small></span>
+      </a>
+      <nav class="side-nav">
+        <a href="{% url 'core:dashboard' %}" class="{% if request.path == '/' %}active{% endif %}"><span>⌂</span> Início</a>
+        <a href="/rebanho/" class="{% if '/rebanho/' in request.path %}active{% endif %}"><span>♢</span> Rebanho</a>
+        <a href="{% url 'reproducao:coberturas' %}" class="{% if '/reproducao/' in request.path %}active{% endif %}"><span>↻</span> Coberturas</a>
+        <a href="/leite/" class="{% if '/leite/' in request.path %}active{% endif %}"><span>◉</span> Leite</a>
+        <a href="{% url 'relatorios:leite' %}" class="{% if '/relatorios/' in request.path %}active{% endif %}"><span>▥</span> Relatório de leite</a>
+      </nav>
+    </aside>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">{{ configuracao_global.nome_propriedade|default:'Gestão do sítio' }}</p>
+        <h1>{% block page_title %}Visão geral{% endblock %}</h1>
+      </div>
+      <details class="user-menu">
+        <summary aria-label="Abrir menu do usuário">
+          <span>{{ user.get_username|slice:':1'|upper }}</span>
+          <span class="user-name">{{ user.get_username }}</span>
+        </summary>
+        <div class="user-popover">
+          <a href="{% url 'password_change' %}">Alterar senha</a>
+          {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administração</a>{% endif %}
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sair</button></form>
+        </div>
+      </details>
+    </header>
+  {% endif %}
+
+  <main id="conteudo" class="{% if user.is_authenticated %}app-main{% else %}auth-main{% endif %}">
+    {% if messages %}
+      <div class="toast-stack" aria-live="polite">
+        {% for message in messages %}
+          <div class="app-toast {{ message.tags }}" role="status">
+            <span>{{ message }}</span><button type="button" aria-label="Fechar" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user.is_authenticated %}
+    <nav class="mobile-nav" aria-label="Navegação no celular">
+      <a href="{% url 'core:dashboard' %}" class="{% if request.path == '/' %}active{% endif %}"><span>⌂</span><small>Início</small></a>
+      <a href="/rebanho/" class="{% if '/rebanho/' in request.path %}active{% endif %}"><span>♢</span><small>Rebanho</small></a>
+      <a href="{% url 'reproducao:coberturas' %}" class="{% if '/reproducao/' in request.path %}active{% endif %}"><span>↻</span><small>Coberturas</small></a>
+      <a href="{% url 'leite:ordenha_nova' %}" class="primary-action"><span>＋</span><small>Leite</small></a>
+      <a href="{% url 'relatorios:leite' %}" class="{% if '/relatorios/' in request.path %}active{% endif %}"><span>▥</span><small>Relatório</small></a>
+    </nav>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

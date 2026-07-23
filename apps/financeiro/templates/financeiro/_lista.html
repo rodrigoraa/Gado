@@ -1,0 +1,21 @@
+<div id="lista-registros">
+  <section class="card-grid" aria-label="{{ titulo }}">
+    {% for objeto in objetos %}
+      <article class="surface-card list-card">
+        <div><strong>{{ objeto }}</strong>
+          {% if objeto.situacao %}<p class="text-muted mb-0">{{ objeto.get_situacao_display }}</p>{% endif %}
+          {% if objeto.ativo != None %}<p class="text-muted mb-0">{% if objeto.ativo %}Ativo{% else %}Inativo{% endif %}</p>{% endif %}
+        </div>
+        <div class="form-actions">
+          {% if nome_url_detalhe %}<a class="btn-app btn-ghost" href="{% url nome_url_detalhe objeto.pk %}">Ver</a>{% endif %}
+          {% if nome_url_editar %}<a class="btn-app btn-ghost" href="{% url nome_url_editar objeto.pk %}">Editar</a>{% endif %}
+          {% if tipo_arquivo_privado and objeto.anexo %}<a class="btn-app btn-ghost" href="{% url 'financeiro:arquivo_privado' tipo_arquivo_privado objeto.pk %}">Baixar anexo</a>{% endif %}
+          {% if nome_url_cancelar and objeto.ativo_registro %}<a class="btn-app btn-danger-app" href="{% url nome_url_cancelar objeto.pk %}">Cancelar</a>{% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <div class="surface-card empty-state"><h2>Nenhum registro</h2><p>Use o botão acima para começar.</p></div>
+    {% endfor %}
+  </section>
+  {% include "shared/pagination.html" %}
+</div>

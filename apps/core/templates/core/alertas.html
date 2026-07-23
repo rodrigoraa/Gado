@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Alertas — Gestão Rural{% endblock %}
+{% block page_title %}Alertas{% endblock %}
+{% block content %}
+<div class="page-tools"><p>Partos, produção, carências e conciliações que merecem atenção.</p><div><a class="btn-app btn-ghost" href="?status=todos">Mostrar histórico</a></div></div>
+<section class="list-stack">
+  {% for alerta in alertas %}
+  <article class="surface-card list-card alert-card">
+    <span class="alert-dot {{ alerta.nivel }}"></span>
+    <div class="list-card-main"><div><span class="badge-soft">{{ alerta.get_nivel_display }}</span><small>{{ alerta.data_referencia|date:'d/m/Y'|default:'Agora' }}</small></div><h2>{{ alerta.titulo }}</h2><p>{{ alerta.mensagem }}</p></div>
+    {% if not alerta.resolvido %}<form method="post" action="{% url 'core:resolver_alerta' alerta.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn-app btn-ghost">Resolver</button></form>{% else %}<span class="status-pill success">Resolvido</span>{% endif %}
+  </article>
+  {% empty %}<div class="empty-state surface-card"><div class="success-icon">✓</div><h2>Tudo em ordem</h2><p>Não existem alertas pendentes.</p></div>{% endfor %}
+</section>
+{% endblock %}

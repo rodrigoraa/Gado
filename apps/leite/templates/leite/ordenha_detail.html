@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Leite de {{ ordenha.data|date:"d/m/Y" }} — Gestão Rural{% endblock %}
+{% block page_title %}Leite de {{ ordenha.data|date:"d/m/Y" }}{% endblock %}
+{% block content %}
+<section class="page-actions">
+  <a class="btn-app btn-ghost" href="{% url 'leite:ordenhas' %}">Voltar</a>
+  {% if ordenha.ativo_registro %}<a class="btn-app btn-primary-app" href="{% url 'leite:ordenha_editar' ordenha.pk %}">Editar</a>{% endif %}
+</section>
+<section class="metric-grid">
+  <article class="metric-card">
+    <span>Data</span>
+    <strong>{{ ordenha.data|date:"d/m/Y" }}</strong>
+  </article>
+  <article class="metric-card">
+    <span>Turno</span>
+    <strong>{{ ordenha.get_periodo_display }}</strong>
+  </article>
+  <article class="metric-card">
+    <span>Leite tirado</span>
+    <strong>{{ ordenha.quantidade_total|floatformat:3 }} L</strong>
+  </article>
+</section>
+{% endblock %}

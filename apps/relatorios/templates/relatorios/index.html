@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Relatório de leite — Gestão Rural{% endblock %}
+{% block page_title %}Relatório de leite{% endblock %}
+{% block content %}
+<p class="lead-copy">Consulte o leite tirado por dia ou por mês e exporte quando precisar.</p>
+<section class="report-grid">
+  <a class="surface-card report-card" href="{% url 'relatorios:leite' %}">
+    <span>◉</span>
+    <div>
+      <p class="section-kicker">Produção</p>
+      <h2>Leite por período</h2>
+      <p>Totais diários, total do mês e média dos dias registrados.</p>
+    </div>
+    <b>→</b>
+  </a>
+</section>
+{% endblock %}

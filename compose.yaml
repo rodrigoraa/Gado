@@ -1,0 +1,127 @@
+name: gestao-rural
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+    restart: unless-stopped
+    init: true
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      SQLITE_PATH: /app/data/db.sqlite3
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        exec gunicorn config.wsgi:application
+        --bind 0.0.0.0:8000
+        --workers 1
+        --timeout "$${GUNICORN_TIMEOUT:-120}"
+        --access-logfile -
+        --error-logfile -
+    expose:
+      - "8000"
+    volumes:
+      - sqlite_data:/app/data
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready/', timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    stop_grace_period: 30s
+    networks:
+      - frontend
+
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Defina APP_DOMAIN no arquivo .env}
+    depends_on:
+      web:
+        condition: service_healthy
+    expose:
+      - "80"
+    volumes:
+      - ./deployment/Caddyfile:/etc/caddy/Caddyfile:ro
+      - static_data:/srv/static:ro
+    read_only: true
+    tmpfs:
+      - /config:size=8m,mode=0700
+      - /data:size=8m,mode=0700
+      - /tmp:size=8m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget --quiet --spider --header="Host: $${APP_DOMAIN}" http://127.0.0.1/health/ready/ || exit 1'
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - frontend
+      - tunnel
+
+  cloudflared:
+    # Versão estável verificada em 22/07/2026 e digest multi-arquitetura imutável.
+    image: cloudflare/cloudflared:2026.7.2@sha256:4f6655284ab3d252b7f28fedb19fe6c8fc82ee5b1295c20ac74d475e5398a52d
+    restart: unless-stopped
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token-file
+      - /run/secrets/cloudflare_tunnel_token
+    depends_on:
+      proxy:
+        condition: service_healthy
+    secrets:
+      - cloudflare_tunnel_token
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - tunnel
+      # Rede não interna necessária somente para a conexão de saída com a Cloudflare.
+      - egress
+
+volumes:
+  sqlite_data:
+  static_data:
+  media_data:
+
+networks:
+  frontend:
+  tunnel:
+    internal: true
+  egress:
+
+secrets:
+  cloudflare_tunnel_token:
+    file: ./secrets/cloudflare_tunnel_token.txt

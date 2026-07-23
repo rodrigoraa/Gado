@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Partos — Gestão Rural{% endblock %}
+{% block page_title %}Partos{% endblock %}
+{% block content %}
+<section class="page-actions"><a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas' %}">Coberturas</a><a class="btn-app btn-primary-app" href="{% url 'reproducao:parto_novo' %}">Registrar parto</a></section>
+<section class="card-grid">{% for parto in partos %}<article class="surface-card list-card"><div><p class="eyebrow">{{ parto.get_situacao_display }}</p><h2>{{ parto.vaca }}</h2><p>{{ parto.data_hora|date:"d/m/Y H:i" }} · {{ parto.get_resultado_display }}</p><small>{{ parto.quantidade_bezerros }} bezerro{{ parto.quantidade_bezerros|pluralize }}</small></div><a class="btn-app btn-ghost" href="{% url 'reproducao:parto_detalhe' parto.pk %}">Ver</a></article>{% empty %}<article class="surface-card empty-state"><h2>Nenhum parto registrado</h2></article>{% endfor %}</section>
+{% include "shared/pagination.html" %}
+{% endblock %}
+

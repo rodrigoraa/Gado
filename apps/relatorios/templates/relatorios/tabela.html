@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load relatorios_tags %}
+{% block title %}{{ titulo }} — Gestão Rural{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+{% if filtros_periodo %}<form class="filter-bar surface-card" method="get"><input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}"><input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}"><button class="btn-app btn-primary-app">Aplicar período</button></form>{% endif %}
+<div class="export-row"><p><strong>{{ total }}</strong></p><div><a class="btn-app btn-ghost" href="?{{ request.GET.urlencode }}&formato=pdf">Baixar PDF</a><a class="btn-app btn-ghost" href="?{{ request.GET.urlencode }}&formato=xlsx">Baixar XLSX</a></div></div>
+<div class="table-surface surface-card"><table class="responsive-table"><thead><tr>{% for cabecalho in cabecalhos %}<th>{{ cabecalho }}</th>{% endfor %}</tr></thead><tbody>
+{% for linha in linhas %}<tr>{% for valor in linha %}<td data-label="{{ cabecalhos|item:forloop.counter0 }}">{{ valor }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="20">Nenhum registro no período.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

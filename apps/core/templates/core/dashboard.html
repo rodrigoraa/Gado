@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Início — Gestão Rural{% endblock %}
+{% block page_title %}Visão geral{% endblock %}
+{% block content %}
+<div class="dashboard-lead">
+  <p class="lead-copy">Cadastre o rebanho, as coberturas e o leite sem complicação.</p>
+</div>
+
+<section class="quick-actions essential-actions" aria-label="Ações principais">
+  <a href="{% url 'rebanho:animal_novo' %}"><span>＋</span><strong>Cadastrar animal</strong><small>Nome, cor, foto e sexo</small></a>
+  <a href="{% url 'rebanho:bezerro_novo' %}"><span>♢</span><strong>Cadastrar bezerro</strong><small>Com mãe opcional</small></a>
+  <a href="{% url 'reproducao:cobertura_nova' %}"><span>↻</span><strong>Registrar cobertura</strong><small>Vaca, boi e data</small></a>
+  <a href="{% url 'leite:ordenha_nova' %}"><span>◉</span><strong>Registrar leite</strong><small>Data e litros tirados</small></a>
+</section>
+
+<section class="metric-grid essential-metrics" aria-label="Resumo">
+  <a class="metric-card" href="{% url 'rebanho:animais' %}">
+    <span>Animais cadastrados</span>
+    <strong>{{ indicadores.rebanho.ativos }}</strong>
+    <small>{{ indicadores.rebanho.bezerros }} ligado{{ indicadores.rebanho.bezerros|pluralize }} à mãe</small>
+  </a>
+  <a class="metric-card" href="{% url 'reproducao:coberturas' %}">
+    <span>Coberturas em acompanhamento</span>
+    <strong>{{ indicadores.reproducao.coberturas_abertas }}</strong>
+    <small>{% if indicadores.reproducao.proxima_previsao %}Próxima previsão: {{ indicadores.reproducao.proxima_previsao|date:"d/m/Y" }}{% else %}Nenhuma previsão registrada{% endif %}</small>
+  </a>
+  <a class="metric-card" href="{% url 'leite:ordenhas' %}">
+    <span>Leite tirado hoje</span>
+    <strong>{{ indicadores.leite.hoje|floatformat:3 }} L</strong>
+    <small>Abrir lançamentos</small>
+  </a>
+  <a class="metric-card" href="{% url 'relatorios:leite' %}">
+    <span>Leite neste mês</span>
+    <strong>{{ indicadores.leite.mes|floatformat:3 }} L</strong>
+    <small>Ver relatório diário ou mensal</small>
+  </a>
+</section>
+{% endblock %}

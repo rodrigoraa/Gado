@@ -1,0 +1,6 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+@page { size: A4 landscape; margin: 1.4cm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #65736e; } }
+body { color: #1c2925; font: 9pt Arial, sans-serif; } h1 { margin: 0 0 4mm; color: #173f35; font: 22pt Georgia, serif; }
+.meta { margin-bottom: 5mm; color: #65736e; } table { width: 100%; border-collapse: collapse; } th { padding: 2.5mm; color: white; background: #215446; text-align: left; }
+td { padding: 2.2mm; border-bottom: .2mm solid #dfe5df; } tr:nth-child(even) td { background: #f4f6f3; } .total { margin: 0 0 4mm; font-weight: bold; }
+</style></head><body><h1>{{ titulo }}</h1><p class="meta">Gerado em {% now "d/m/Y H:i" %}{% if inicio %} · Período de {{ inicio|date:'d/m/Y' }} a {{ fim|date:'d/m/Y' }}{% endif %}</p><p class="total">{{ total }}</p><table><thead><tr>{% for cabecalho in cabecalhos %}<th>{{ cabecalho }}</th>{% endfor %}</tr></thead><tbody>{% for linha in linhas %}<tr>{% for valor in linha %}<td>{{ valor }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></body></html>
