@@ -13,7 +13,12 @@ from .models import Cobertura, DiagnosticoGestacao, Parto, PerdaGestacional
 
 
 def listar_coberturas(
-    *, busca: str = "", situacao: str = "", inicio: date | None = None, fim: date | None = None
+    *,
+    busca: str = "",
+    situacao: str = "",
+    inicio: date | None = None,
+    fim: date | None = None,
+    incluir_canceladas: bool = False,
 ) -> QuerySet[Cobertura]:
     queryset = Cobertura.objects.select_related("vaca", "touro")
     if busca := busca.strip():
@@ -25,6 +30,8 @@ def listar_coberturas(
         )
     if situacao in Cobertura.Situacao.values:
         queryset = queryset.filter(situacao=situacao)
+    elif not incluir_canceladas:
+        queryset = queryset.exclude(situacao=Cobertura.Situacao.CANCELADA)
     if inicio:
         queryset = queryset.filter(data__gte=inicio)
     if fim:
@@ -33,7 +40,11 @@ def listar_coberturas(
 
 
 def listar_coberturas_por_touro(*, busca: str = "") -> QuerySet[Cobertura]:
-    queryset = Cobertura.objects.filter(touro__isnull=False).select_related("vaca", "touro")
+    queryset = (
+        Cobertura.objects.filter(touro__isnull=False)
+        .exclude(situacao=Cobertura.Situacao.CANCELADA)
+        .select_related("vaca", "touro")
+    )
     if busca := busca.strip():
         queryset = queryset.filter(touro__nome__icontains=busca)
     return queryset.order_by("touro__nome", "-data", "-criado_em")
@@ -108,7 +119,7 @@ def historico_reprodutivo(*, vaca: Animal) -> list[dict[str, Any]]:
             "descricao": cobertura.get_situacao_display(),
             "objeto": cobertura,
         }
-        for cobertura in listar_coberturas(busca="").filter(vaca=vaca)
+        for cobertura in listar_coberturas(busca="", incluir_canceladas=True).filter(vaca=vaca)
     )
     eventos.extend(
         {

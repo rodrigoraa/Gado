@@ -99,10 +99,14 @@ class AnimalDetailView(LoginRequiredMixin, DetailView):
         contexto.update(
             {
                 "filhos": self.object.filhos,
-                "coberturas": self.object.coberturas.select_related("touro").order_by("-data"),
-                "coberturas_como_touro": self.object.coberturas_como_touro.select_related(
-                    "vaca"
-                ).order_by("-data"),
+                "coberturas": self.object.coberturas.exclude(situacao="CANCELADA")
+                .select_related("touro")
+                .order_by("-data"),
+                "coberturas_como_touro": self.object.coberturas_como_touro.exclude(
+                    situacao="CANCELADA"
+                )
+                .select_related("vaca")
+                .order_by("-data"),
             }
         )
         return contexto

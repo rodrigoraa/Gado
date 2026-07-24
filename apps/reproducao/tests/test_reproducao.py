@@ -454,6 +454,49 @@ def test_acoes_da_cobertura_corrigem_data_e_cancelam(
     assert cobertura.situacao == Cobertura.Situacao.CANCELADA
 
 
+def test_cobertura_cancelada_some_das_listas_mas_preserva_historico(
+    client, django_user_model, vaca: Animal, touro: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="ocultar-cobertura-cancelada",
+        password="teste",
+    )
+    client.force_login(usuario)
+    cobertura = criar_cobertura(vaca, touro)
+    url_detalhe = reverse(
+        "reproducao:cobertura_detalhe",
+        kwargs={"cobertura_id": cobertura.pk},
+    )
+
+    resposta = client.post(
+        reverse(
+            "reproducao:cobertura_cancelar",
+            kwargs={"cobertura_id": cobertura.pk},
+        ),
+        {"justificativa": "Cobertura cadastrada por engano."},
+    )
+    lista = client.get(reverse("reproducao:coberturas"))
+    lista_por_boi = client.get(reverse("reproducao:coberturas_por_touro"))
+    detalhe_vaca = client.get(
+        reverse("rebanho:animal_detalhe", kwargs={"animal_id": vaca.pk})
+    )
+    detalhe_boi = client.get(
+        reverse("rebanho:animal_detalhe", kwargs={"animal_id": touro.pk})
+    )
+
+    assert resposta.status_code == 302
+    assert url_detalhe not in lista.content.decode()
+    assert url_detalhe not in lista_por_boi.content.decode()
+    assert url_detalhe not in detalhe_vaca.content.decode()
+    assert url_detalhe not in detalhe_boi.content.decode()
+    assert client.get(url_detalhe).status_code == 200
+    assert Cobertura.objects.filter(
+        pk=cobertura.pk,
+        situacao=Cobertura.Situacao.CANCELADA,
+    ).exists()
+    assert cobertura.historico.filter(evento="CANCELAMENTO").exists()
+
+
 def test_fluxo_da_cobertura_confirma_nascimento_e_exibe_bezerro(
     client, django_user_model, vaca: Animal, touro: Animal
 ) -> None:  # type: ignore[no-untyped-def]
