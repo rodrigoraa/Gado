@@ -100,21 +100,15 @@ def test_impede_autorreferencia_e_ciclo_de_parentesco() -> None:
         )
 
 
-def test_mudanca_de_parentesco_exige_motivo_e_preserva_historico() -> None:
+def test_mudanca_de_parentesco_registra_motivo_automatico_e_preserva_historico() -> None:
     mae_um = animal(identificacao="MAE-1")
     mae_dois = animal(identificacao="MAE-2")
     filha = animal(identificacao="FILHA-1", mae=mae_um)
-    with pytest.raises(ValidationError, match="Justifique"):
-        salvar_animal(animal=filha, mae=mae_dois)
-    atualizada = salvar_animal(
-        animal=filha,
-        mae=mae_dois,
-        justificativa_parentesco="Exame de filiação conferido",
-    )
+    atualizada = salvar_animal(animal=filha, mae=mae_dois)
     historico = atualizada.historico_parentesco.get()
     assert historico.mae_anterior == mae_um
     assert historico.mae_nova == mae_dois
-    assert historico.justificativa == "Exame de filiação conferido"
+    assert historico.justificativa == "Alteração registrada automaticamente pelo sistema."
 
 
 def test_idade_e_calculada_e_tipo_de_animal_e_informado() -> None:
@@ -362,6 +356,47 @@ def test_cadastro_de_bezerro_pelo_formulario_principal_associa_a_mae(
     bezerro = Animal.objects.get(nome="Pingo")
     assert bezerro.tipo_animal == Animal.TipoAnimal.BEZERRO
     assert bezerro.mae == mae
+
+
+def test_edicao_de_bezerro_troca_a_mae_sem_pedir_justificativa(
+    client, django_user_model
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="editar-bezerro-sem-justificativa",
+        password="teste",
+    )
+    client.force_login(usuario)
+    mae_anterior = animal(nome="Mimosa", tipo_animal=Animal.TipoAnimal.VACA)
+    mae_nova = animal(nome="Estrela", tipo_animal=Animal.TipoAnimal.VACA)
+    bezerro = animal(
+        nome="Pingo",
+        sexo=Animal.Sexo.MACHO,
+        tipo_animal=Animal.TipoAnimal.BEZERRO,
+        mae=mae_anterior,
+    )
+    url = reverse("rebanho:animal_editar", kwargs={"animal_id": bezerro.pk})
+
+    pagina = client.get(url)
+    assert pagina.status_code == 200
+    assert "Justificativa" not in pagina.content.decode()
+
+    resposta = client.post(
+        url,
+        {
+            "nome": "Pingo",
+            "cor": "Malhado",
+            "sexo": Animal.Sexo.MACHO,
+            "tipo_animal": Animal.TipoAnimal.BEZERRO,
+            "mae": str(mae_nova.pk),
+        },
+    )
+
+    assert resposta.status_code == 302
+    bezerro.refresh_from_db()
+    assert bezerro.mae == mae_nova
+    assert bezerro.historico_parentesco.get().justificativa == (
+        "Alteração registrada automaticamente pelo sistema."
+    )
 
 
 @pytest.mark.parametrize(

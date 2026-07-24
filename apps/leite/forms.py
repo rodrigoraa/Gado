@@ -65,10 +65,6 @@ class OrdenhaForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class ProducaoAnimalForm(BootstrapFormMixin, forms.ModelForm):
-    justificativa = forms.CharField(
-        label="Justificativa da correção", required=False, widget=forms.Textarea(attrs={"rows": 2})
-    )
-
     class Meta:
         model = ProducaoAnimal
         fields = ("ordenha", "vaca", "quantidade_litros", "observacoes")
@@ -85,9 +81,7 @@ class ProducaoAnimalForm(BootstrapFormMixin, forms.ModelForm):
         if self.instance.vaca_id:
             criterio_vacas |= Q(pk=self.instance.vaca_id)
         self.fields["vaca"].queryset = Animal.objects.filter(criterio_vacas).distinct()
-        if self.instance._state.adding:
-            self.fields.pop("justificativa", None)
-        else:
+        if not self.instance._state.adding:
             self.fields["ordenha"].disabled = True
             self.fields["vaca"].disabled = True
 
@@ -98,7 +92,6 @@ class ProducaoAnimalForm(BootstrapFormMixin, forms.ModelForm):
                 producao=self.instance,
                 quantidade_litros=self.cleaned_data["quantidade_litros"],
                 observacoes=self.cleaned_data.get("observacoes", ""),
-                justificativa=self.cleaned_data.get("justificativa", ""),
             )
         else:
             self.instance = registrar_producao(
@@ -133,23 +126,12 @@ class DestinoLeiteForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class ConciliacaoOrdenhaForm(BootstrapFormMixin, forms.Form):
-    justificativa_divergencia = forms.CharField(
-        label="Justificativa da diferença",
-        required=False,
-        help_text="Obrigatória quando a diferença ultrapassar a tolerância configurada.",
-        widget=forms.Textarea(attrs={"rows": 2}),
-    )
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()
 
 
 class CancelarOrdenhaForm(BootstrapFormMixin, forms.Form):
-    motivo = forms.CharField(
-        label="Motivo do cancelamento", widget=forms.Textarea(attrs={"rows": 3})
-    )
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()

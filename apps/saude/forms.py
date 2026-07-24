@@ -62,7 +62,6 @@ class TratamentoForm(BootstrapFormMixin, forms.ModelForm):
             "carencia_dias",
             "carencia_horas",
             "observacoes",
-            "motivo_correcao",
         )
         widgets = {
             "data_hora": forms.DateTimeInput(
@@ -70,7 +69,6 @@ class TratamentoForm(BootstrapFormMixin, forms.ModelForm):
             ),
             "motivo": forms.Textarea(attrs={"rows": 2}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "motivo_correcao": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -80,8 +78,6 @@ class TratamentoForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["produto"].queryset = ProdutoSaude.objects.filter(
             ativo=True
         ) | ProdutoSaude.objects.filter(pk=getattr(self.instance, "produto_id", None))
-        if self.instance._state.adding:
-            self.fields.pop("motivo_correcao", None)
 
     def save(self, commit: bool = True) -> Tratamento:
         del commit
@@ -93,10 +89,6 @@ class TratamentoForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class CancelamentoForm(BootstrapFormMixin, forms.Form):
-    motivo = forms.CharField(
-        label="Motivo do cancelamento", widget=forms.Textarea(attrs={"rows": 3})
-    )
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()
@@ -131,7 +123,6 @@ class EventoSaudeForm(BootstrapFormMixin, forms.ModelForm):
             "veterinario",
             "responsavel",
             "resultado",
-            "motivo_correcao",
         )
         widgets = {
             "data_hora": forms.DateTimeInput(
@@ -139,20 +130,12 @@ class EventoSaudeForm(BootstrapFormMixin, forms.ModelForm):
             ),
             "descricao": forms.Textarea(attrs={"rows": 4}),
             "resultado": forms.Textarea(attrs={"rows": 3}),
-            "motivo_correcao": forms.Textarea(attrs={"rows": 3}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()
         self.fields["data_hora"].input_formats = ("%Y-%m-%dT%H:%M",)
-        if self.instance._state.adding:
-            self.fields.pop("motivo_correcao", None)
-        else:
-            self.fields["motivo_correcao"].required = False
-            self.fields[
-                "motivo_correcao"
-            ].help_text = "Obrigatória quando qualquer dado do evento for alterado."
 
     def save(self, commit: bool = True) -> EventoSaude:
         del commit

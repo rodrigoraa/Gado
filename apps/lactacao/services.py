@@ -117,10 +117,11 @@ def encerrar_lactacao(
 
 
 @transaction.atomic
-def cancelar_lactacao(*, lactacao: Lactacao, justificativa: str) -> Lactacao:
+def cancelar_lactacao(*, lactacao: Lactacao, justificativa: str = "") -> Lactacao:
     lactacao = Lactacao.objects.select_for_update().get(pk=lactacao.pk)
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("O cancelamento exige justificativa.")})
+    justificativa = (
+        justificativa.strip() or "Alteração registrada automaticamente pelo sistema."
+    )
     if lactacao.producoes.exists():
         raise ValidationError(
             _("Uma lactação com produção registrada não pode ser cancelada; encerre-a.")

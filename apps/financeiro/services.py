@@ -32,6 +32,7 @@ SITUACOES_ENTREGA_PENDENTE = {
     EntregaLeite.Situacao.REGISTRADA,
     EntregaLeite.Situacao.AGUARDANDO_FECHAMENTO,
 }
+REGISTRO_AUTOMATICO = "Alteração registrada automaticamente pelo sistema."
 
 
 def _atribuir(instance: Any, dados: Mapping[str, Any], campos: Iterable[str]) -> None:
@@ -136,8 +137,10 @@ def salvar_preco(*, instancia: PrecoLeite | None = None, **dados: Any) -> PrecoL
             campo in dados and dados[campo] != getattr(preco, campo)
             for campo in ("laticinio", "data_inicial", "data_final", "valor_litro")
         )
-        if mudou and not str(dados.get("motivo_alteracao", "")).strip():
-            raise ValidationError({"motivo_alteracao": "A alteração de preço exige justificativa."})
+        if mudou:
+            dados["motivo_alteracao"] = (
+                str(dados.get("motivo_alteracao", "")).strip() or REGISTRO_AUTOMATICO
+            )
     else:
         preco = PrecoLeite()
     laticinio = dados.get("laticinio", getattr(preco, "laticinio", None))
@@ -205,8 +208,10 @@ def salvar_entrega(*, instancia: EntregaLeite | None = None, **dados: Any) -> En
         mudou = any(
             campo in dados and dados[campo] != getattr(entrega, campo) for campo in campos_criticos
         )
-        if mudou and not str(dados.get("motivo_correcao", "")).strip():
-            raise ValidationError({"motivo_correcao": "A correção financeira exige justificativa."})
+        if mudou:
+            dados["motivo_correcao"] = (
+                str(dados.get("motivo_correcao", "")).strip() or REGISTRO_AUTOMATICO
+            )
     else:
         entrega = EntregaLeite()
 
@@ -238,10 +243,9 @@ def salvar_entrega(*, instancia: EntregaLeite | None = None, **dados: Any) -> En
     elif preco_informado is not None:
         preco_aplicado = preco_informado
         if preco_vigente is None or preco_aplicado != preco_vigente.valor_litro:
-            if not str(dados.get("justificativa_preco", "")).strip():
-                raise ValidationError(
-                    {"justificativa_preco": "O preço manual exige justificativa."}
-                )
+            dados["justificativa_preco"] = (
+                str(dados.get("justificativa_preco", "")).strip() or REGISTRO_AUTOMATICO
+            )
             entrega.preco_manual = True
     elif preco_vigente:
         preco_aplicado = preco_vigente.valor_litro
@@ -474,8 +478,10 @@ def atualizar_dados_informados(*, fechamento: FechamentoLeite, **dados: Any) -> 
         campo in dados and dados[campo] != getattr(fechamento, campo)
         for campo in campos_financeiros
     )
-    if alterou_valor and not str(dados.get("motivo_ajuste", "")).strip():
-        raise ValidationError({"motivo_ajuste": "O ajuste financeiro exige justificativa."})
+    if alterou_valor:
+        dados["motivo_ajuste"] = (
+            str(dados.get("motivo_ajuste", "")).strip() or REGISTRO_AUTOMATICO
+        )
     _atribuir(
         fechamento,
         dados,
@@ -555,11 +561,10 @@ def registrar_recebimento(**dados: Any) -> RecebimentoLeite:
     list(fechamento.recebimentos.select_for_update().values_list("pk", flat=True))
     valor = Decimal(dados.get("valor") or 0)
     total_apos = fechamento.total_recebido + valor
-    if (
-        total_apos > fechamento.valor_liquido_calculado
-        and not str(dados.get("justificativa_excesso", "")).strip()
-    ):
-        raise ValidationError({"justificativa_excesso": "O valor excedente exige justificativa."})
+    if total_apos > fechamento.valor_liquido_calculado:
+        dados["justificativa_excesso"] = (
+            str(dados.get("justificativa_excesso", "")).strip() or REGISTRO_AUTOMATICO
+        )
     recebimento = RecebimentoLeite(fechamento=fechamento)
     _atribuir(
         recebimento,
@@ -587,9 +592,10 @@ def registrar_recebimento(**dados: Any) -> RecebimentoLeite:
 
 
 @transaction.atomic
-def cancelar_recebimento(*, recebimento: RecebimentoLeite, motivo: str) -> RecebimentoLeite:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige justificativa."})
+def cancelar_recebimento(
+    *, recebimento: RecebimentoLeite, motivo: str = ""
+) -> RecebimentoLeite:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     recebimento = (
         RecebimentoLeite.objects.select_for_update()
         .select_related("fechamento")
@@ -607,9 +613,10 @@ def cancelar_recebimento(*, recebimento: RecebimentoLeite, motivo: str) -> Receb
 
 
 @transaction.atomic
-def cancelar_fechamento(*, fechamento: FechamentoLeite, motivo: str) -> FechamentoLeite:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige justificativa."})
+def cancelar_fechamento(
+    *, fechamento: FechamentoLeite, motivo: str = ""
+) -> FechamentoLeite:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     fechamento = FechamentoLeite.objects.select_for_update().get(pk=fechamento.pk)
     if fechamento.recebimentos.filter(situacao=RecebimentoLeite.Situacao.CONFIRMADO).exists():
         raise ValidationError("Cancele os recebimentos confirmados antes de cancelar o fechamento.")
@@ -630,9 +637,8 @@ def cancelar_fechamento(*, fechamento: FechamentoLeite, motivo: str) -> Fechamen
 
 
 @transaction.atomic
-def cancelar_entrega(*, entrega: EntregaLeite, motivo: str) -> EntregaLeite:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige justificativa."})
+def cancelar_entrega(*, entrega: EntregaLeite, motivo: str = "") -> EntregaLeite:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     entrega = EntregaLeite.objects.select_for_update().get(pk=entrega.pk)
     if entrega.fechamentos.exclude(situacao=FechamentoLeite.Situacao.CANCELADO).exists():
         raise ValidationError("Cancele o fechamento antes de cancelar esta entrega.")

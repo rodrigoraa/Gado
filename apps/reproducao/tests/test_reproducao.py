@@ -224,10 +224,13 @@ def test_correcao_de_data_preserva_previsao_original_e_registra_historico(
     assert cobertura.historico.filter(evento="ALTERACAO_DATA").exists()
 
 
-def test_cancelamento_de_cobertura_exige_justificativa(vaca: Animal) -> None:
+def test_cancelamento_de_cobertura_registra_motivo_automaticamente(vaca: Animal) -> None:
     cobertura = criar_cobertura(vaca)
-    with pytest.raises(ValidationError, match="justificativa"):
-        cancelar_cobertura(cobertura=cobertura, justificativa="")
+    cancelada = cancelar_cobertura(cobertura=cobertura)
+    assert cancelada.situacao == Cobertura.Situacao.CANCELADA
+    assert cancelada.motivo_cancelamento == (
+        "Alteração registrada automaticamente pelo sistema."
+    )
 
 
 def test_perda_gestacional_preserva_registro_e_encerra(vaca: Animal) -> None:

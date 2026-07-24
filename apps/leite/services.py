@@ -13,6 +13,8 @@ from apps.core.models import ConfiguracaoSistema
 
 from .models import DestinoLeite, Ordenha, ProducaoAnimal
 
+REGISTRO_AUTOMATICO = "Alteração registrada automaticamente pelo sistema."
+
 
 def _atribuir(instance: Any, dados: Mapping[str, Any], campos: Iterable[str]) -> None:
     for campo in campos:
@@ -53,12 +55,19 @@ def salvar_ordenha(*, instancia: Ordenha | None = None, **dados: Any) -> Ordenha
         alterou = any(
             campo in dados and dados[campo] != getattr(ordenha, campo) for campo in campos_criticos
         )
-        if alterou and not dados.get("motivo_correcao"):
-            raise ValidationError({"motivo_correcao": "Informe o motivo da correção da ordenha."})
         if alterou:
             dados["situacao"] = Ordenha.Situacao.CORRIGIDA
+            dados["motivo_correcao"] = (
+                str(dados.get("motivo_correcao", "")).strip() or REGISTRO_AUTOMATICO
+            )
     else:
         ordenha = Ordenha()
+
+    if dados.get("quantidade_total") == 0 and not (
+        str(dados.get("observacoes", "")).strip()
+        or str(dados.get("motivo_correcao", "")).strip()
+    ):
+        dados["observacoes"] = REGISTRO_AUTOMATICO
 
     _atribuir(
         ordenha,
@@ -170,10 +179,9 @@ def atualizar_producao(
     producao: ProducaoAnimal,
     quantidade_litros: Decimal,
     observacoes: str = "",
-    justificativa: str,
+    justificativa: str = "",
 ) -> ProducaoAnimal:
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": "A correção da produção exige justificativa."})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     producao = (
         ProducaoAnimal.objects.select_for_update().select_related("ordenha").get(pk=producao.pk)
     )
@@ -198,23 +206,16 @@ def conciliar_ordenha(*, ordenha: Ordenha, justificativa: str = "") -> Ordenha:
     excede_percentual = (
         ordenha.diferenca_percentual > configuracao.tolerancia_divergencia_percentual
     )
-    if (excede_litros or excede_percentual) and not justificativa.strip():
-        raise ValidationError(
-            {
-                "justificativa_divergencia": (
-                    "A diferença entre o total e as produções exige justificativa."
-                )
-            }
-        )
+    if excede_litros or excede_percentual:
+        justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     ordenha.justificativa_divergencia = justificativa
     ordenha.save(update_fields=("justificativa_divergencia", "atualizado_em"))
     return ordenha
 
 
 @transaction.atomic
-def cancelar_ordenha(*, ordenha: Ordenha, motivo: str) -> Ordenha:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige justificativa."})
+def cancelar_ordenha(*, ordenha: Ordenha, motivo: str = "") -> Ordenha:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     ordenha = Ordenha.objects.select_for_update().get(pk=ordenha.pk)
     if ordenha.destinos.exists():
         raise ValidationError(

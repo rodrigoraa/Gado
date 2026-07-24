@@ -78,20 +78,17 @@ class PrecoLeiteForm(BootstrapFormMixin, forms.ModelForm):
             "data_final",
             "valor_litro",
             "observacoes",
-            "motivo_alteracao",
         )
         widgets = {
             "data_inicial": forms.DateInput(attrs={"type": "date"}),
             "data_final": forms.DateInput(attrs={"type": "date"}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "motivo_alteracao": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()
         if self.instance._state.adding:
-            self.fields.pop("motivo_alteracao", None)
             ativo = Laticinio.objects.filter(ativo=True).first()
             if ativo:
                 self.initial.setdefault("laticinio", ativo)
@@ -131,8 +128,6 @@ class EntregaLeiteForm(BootstrapFormMixin, forms.ModelForm):
             "numero_documento",
             "anexo",
             "observacoes",
-            "justificativa_preco",
-            "motivo_correcao",
         )
         widgets = {
             "data_coleta": forms.DateTimeInput(
@@ -140,8 +135,6 @@ class EntregaLeiteForm(BootstrapFormMixin, forms.ModelForm):
             ),
             "data_prevista_pagamento": forms.DateInput(attrs={"type": "date"}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "justificativa_preco": forms.Textarea(attrs={"rows": 2}),
-            "motivo_correcao": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -150,8 +143,6 @@ class EntregaLeiteForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["data_coleta"].input_formats = ("%Y-%m-%dT%H:%M",)
         if not self.instance._state.adding:
             self.initial["valor_litro_manual"] = self.instance.valor_litro
-        else:
-            self.fields.pop("motivo_correcao", None)
 
     def save(self, commit: bool = True) -> EntregaLeite:
         del commit
@@ -185,7 +176,6 @@ class FechamentoLeiteForm(BootstrapFormMixin, forms.ModelForm):
             "numero_demonstrativo",
             "arquivo_demonstrativo",
             "observacoes",
-            "motivo_ajuste",
         )
         widgets = {
             "competencia": forms.DateInput(attrs={"type": "date"}),
@@ -194,7 +184,6 @@ class FechamentoLeiteForm(BootstrapFormMixin, forms.ModelForm):
             "data_prevista_pagamento": forms.DateInput(attrs={"type": "date"}),
             "entregas": forms.CheckboxSelectMultiple,
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "motivo_ajuste": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -233,11 +222,9 @@ class AjusteFechamentoForm(BootstrapFormMixin, forms.ModelForm):
             "numero_demonstrativo",
             "arquivo_demonstrativo",
             "observacoes",
-            "motivo_ajuste",
         )
         widgets = {
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "motivo_ajuste": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -261,12 +248,10 @@ class RecebimentoLeiteForm(BootstrapFormMixin, forms.ModelForm):
             "referencia",
             "anexo",
             "observacoes",
-            "justificativa_excesso",
         )
         widgets = {
             "data": forms.DateInput(attrs={"type": "date"}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
-            "justificativa_excesso": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -289,10 +274,6 @@ class RecebimentoLeiteForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class CancelamentoForm(BootstrapFormMixin, forms.Form):
-    motivo = forms.CharField(
-        label="Motivo do cancelamento", widget=forms.Textarea(attrs={"rows": 3})
-    )
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._aplicar_bootstrap()

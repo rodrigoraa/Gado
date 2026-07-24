@@ -189,7 +189,7 @@ class TratamentoCancelarView(LoginRequiredMixin, View):
         form = CancelamentoForm(request.POST)
         if form.is_valid():
             try:
-                cancelar_tratamento(tratamento=tratamento, motivo=form.cleaned_data["motivo"])
+                cancelar_tratamento(tratamento=tratamento)
             except ValidationError as erro:
                 _adicionar_erros(form, erro)
             else:
@@ -306,7 +306,7 @@ class EventoSaudeCancelarView(LoginRequiredMixin, View):
         form = CancelamentoForm(request.POST)
         if form.is_valid():
             try:
-                cancelar_evento_saude(evento=evento, motivo=form.cleaned_data["motivo"])
+                cancelar_evento_saude(evento=evento)
             except ValidationError as erro:
                 _adicionar_erros(form, erro)
             else:

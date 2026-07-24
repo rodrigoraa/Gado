@@ -190,13 +190,11 @@ class AcaoCoberturaView(LoginRequiredMixin, View):
                     alterar_data_cobertura(
                         cobertura=cobertura,
                         nova_data=form.cleaned_data["nova_data"],
-                        justificativa=form.cleaned_data["justificativa"],
                     )
                     mensagem = "Data corrigida e histórico preservado."
                 else:
                     cancelar_cobertura(
                         cobertura=cobertura,
-                        justificativa=form.cleaned_data["justificativa"],
                     )
                     mensagem = "Cobertura cancelada sem exclusão do histórico."
             except ValidationError as erro:
@@ -410,7 +408,6 @@ class PartoCorrigirView(LoginRequiredMixin, View):
             try:
                 corrigido = corrigir_parto(
                     parto=parto,
-                    justificativa=form.cleaned_data["justificativa"],
                     **{campo: form.cleaned_data[campo] for campo in CorrecaoPartoForm._meta.fields},
                 )
             except ValidationError as erro:
@@ -441,7 +438,7 @@ class PartoCancelarView(LoginRequiredMixin, View):
         form = JustificativaForm(request.POST)
         if form.is_valid():
             try:
-                cancelar_parto(parto=parto, justificativa=form.cleaned_data["justificativa"])
+                cancelar_parto(parto=parto)
             except ValidationError as erro:
                 _erros_servico(form, erro)
             else:

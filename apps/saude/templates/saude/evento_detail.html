@@ -32,8 +32,8 @@
       <dt>Outro responsável</dt><dd>{{ evento.responsavel|default:"—" }}</dd>
       <dt>Registrado em</dt><dd>{{ evento.criado_em|date:"d/m/Y H:i" }}</dd>
       <dt>Última atualização</dt><dd>{{ evento.atualizado_em|date:"d/m/Y H:i" }}</dd>
-      {% if evento.motivo_correcao %}<dt>Justificativa da última correção</dt><dd>{{ evento.motivo_correcao|linebreaksbr }}</dd>{% endif %}
-      {% if evento.motivo_cancelamento %}<dt>Justificativa do cancelamento</dt><dd>{{ evento.motivo_cancelamento|linebreaksbr }}</dd><dt>Cancelado em</dt><dd>{{ evento.cancelado_em|date:"d/m/Y H:i" }}</dd>{% endif %}
+      {% if evento.motivo_correcao %}<dt>Detalhes da última correção</dt><dd>{{ evento.motivo_correcao|linebreaksbr }}</dd>{% endif %}
+      {% if evento.motivo_cancelamento %}<dt>Detalhes do cancelamento</dt><dd>{{ evento.motivo_cancelamento|linebreaksbr }}</dd><dt>Cancelado em</dt><dd>{{ evento.cancelado_em|date:"d/m/Y H:i" }}</dd>{% endif %}
     </dl>
   </article>
 </section>

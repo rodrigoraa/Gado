@@ -4,7 +4,6 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
-from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 
@@ -53,7 +52,7 @@ def test_calcula_carencia_e_libera_no_horario_exato() -> None:
     assert tratamentos_em_carencia().filter(pk=tratamento.pk).exists()
 
 
-def test_correcao_exige_justificativa() -> None:
+def test_correcao_registra_motivo_automaticamente() -> None:
     tratamento = salvar_tratamento(
         animal=criar_vaca(),
         produto=criar_produto(),
@@ -61,8 +60,9 @@ def test_correcao_exige_justificativa() -> None:
         dose=Decimal("5.000"),
         motivo="Tratamento",
     )
-    with pytest.raises(ValidationError):
-        salvar_tratamento(instancia=tratamento, dose=Decimal("6.000"))
+    corrigido = salvar_tratamento(instancia=tratamento, dose=Decimal("6.000"))
+    assert corrigido.dose == Decimal("6.000")
+    assert corrigido.motivo_correcao == "Alteração registrada automaticamente pelo sistema."
 
 
 def test_descarte_fica_ligado_ao_tratamento() -> None:

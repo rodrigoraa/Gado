@@ -26,6 +26,7 @@ from .models import (
 TRATAMENTO_SUBSTITUIR = "substituir"
 TRATAMENTO_MANTER = "manter"
 TRATAMENTO_INCERTA = "incerta"
+REGISTRO_AUTOMATICO = "Alteração registrada automaticamente pelo sistema."
 TRATAMENTOS_COBERTURA_ABERTA = {
     TRATAMENTO_SUBSTITUIR,
     TRATAMENTO_MANTER,
@@ -142,11 +143,10 @@ def registrar_cobertura(
 
 @transaction.atomic
 def alterar_data_cobertura(
-    *, cobertura: Cobertura, nova_data: date, justificativa: str
+    *, cobertura: Cobertura, nova_data: date, justificativa: str = ""
 ) -> Cobertura:
     cobertura = Cobertura.objects.select_for_update().get(pk=cobertura.pk)
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("Justifique a alteração da data.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     if cobertura.situacao in {
         Cobertura.Situacao.FINALIZADA_COM_PARTO,
         Cobertura.Situacao.CANCELADA,
@@ -171,12 +171,11 @@ def alterar_data_cobertura(
 
 
 @transaction.atomic
-def cancelar_cobertura(*, cobertura: Cobertura, justificativa: str) -> Cobertura:
+def cancelar_cobertura(*, cobertura: Cobertura, justificativa: str = "") -> Cobertura:
     cobertura = Cobertura.objects.select_for_update().get(pk=cobertura.pk)
     if cobertura.situacao == Cobertura.Situacao.FINALIZADA_COM_PARTO:
         raise ValidationError(_("Cancele ou corrija primeiro o parto relacionado."))
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("O cancelamento exige justificativa.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     return _alterar_situacao_cobertura(
         cobertura,
         Cobertura.Situacao.CANCELADA,
@@ -411,7 +410,7 @@ def _dados_parto(parto: Parto) -> dict[str, Any]:
 
 
 @transaction.atomic
-def corrigir_parto(*, parto: Parto, justificativa: str, **alteracoes: Any) -> Parto:
+def corrigir_parto(*, parto: Parto, justificativa: str = "", **alteracoes: Any) -> Parto:
     parto = (
         Parto.objects.select_for_update(of=("self",))
         .select_related("vaca", "cobertura")
@@ -420,8 +419,7 @@ def corrigir_parto(*, parto: Parto, justificativa: str, **alteracoes: Any) -> Pa
     )
     if parto.situacao == Parto.Situacao.CANCELADO:
         raise ValidationError(_("Um parto cancelado não pode ser corrigido."))
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("A correção exige justificativa.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     permitidos = {
         "data_hora",
         "resultado",
@@ -525,12 +523,11 @@ def corrigir_parto(*, parto: Parto, justificativa: str, **alteracoes: Any) -> Pa
 
 
 @transaction.atomic
-def cancelar_parto(*, parto: Parto, justificativa: str) -> Parto:
+def cancelar_parto(*, parto: Parto, justificativa: str = "") -> Parto:
     parto = (
         Parto.objects.select_for_update(of=("self",)).select_related("cobertura").get(pk=parto.pk)
     )
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("O cancelamento exige justificativa.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     if parto.situacao == Parto.Situacao.CANCELADO:
         raise ValidationError(_("Este parto já está cancelado."))
     if Nascimento.objects.select_for_update().filter(parto=parto).exists():

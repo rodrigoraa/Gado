@@ -9,6 +9,8 @@ from django.utils import timezone
 
 from .models import EventoSaude, ProdutoSaude, Tratamento
 
+REGISTRO_AUTOMATICO = "Alteração registrada automaticamente pelo sistema."
+
 CAMPOS_EVENTO_EDITAVEIS = (
     "animal",
     "tipo",
@@ -69,12 +71,11 @@ def salvar_tratamento(*, instancia: Tratamento | None = None, **dados: Any) -> T
             campo in dados and dados[campo] != getattr(tratamento, campo)
             for campo in campos_criticos
         )
-        if mudou and not str(dados.get("motivo_correcao", "")).strip():
-            raise ValidationError(
-                {"motivo_correcao": "A correção do tratamento exige justificativa."}
-            )
         if mudou:
             dados["situacao"] = Tratamento.Situacao.CORRIGIDO
+            dados["motivo_correcao"] = (
+                str(dados.get("motivo_correcao", "")).strip() or REGISTRO_AUTOMATICO
+            )
     else:
         tratamento = Tratamento()
 
@@ -109,9 +110,8 @@ def salvar_tratamento(*, instancia: Tratamento | None = None, **dados: Any) -> T
 
 
 @transaction.atomic
-def cancelar_tratamento(*, tratamento: Tratamento, motivo: str) -> Tratamento:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige justificativa."})
+def cancelar_tratamento(*, tratamento: Tratamento, motivo: str = "") -> Tratamento:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     tratamento = Tratamento.objects.select_for_update().get(pk=tratamento.pk)
     tratamento.situacao = Tratamento.Situacao.CANCELADO
     tratamento.motivo_cancelamento = motivo
@@ -170,7 +170,9 @@ def registrar_evento_saude(**dados: Any) -> EventoSaude:
 
 
 @transaction.atomic
-def corrigir_evento_saude(*, evento: EventoSaude, motivo: str, **dados: Any) -> EventoSaude:
+def corrigir_evento_saude(
+    *, evento: EventoSaude, motivo: str = "", **dados: Any
+) -> EventoSaude:
     evento = EventoSaude.objects.select_for_update().get(pk=evento.pk)
     if evento.cancelado or not evento.ativo_registro:
         raise ValidationError("Um evento cancelado não pode ser corrigido.")
@@ -182,8 +184,7 @@ def corrigir_evento_saude(*, evento: EventoSaude, motivo: str, **dados: Any) -> 
     }
     if not alteracoes:
         return evento
-    if not motivo.strip():
-        raise ValidationError({"motivo_correcao": "A correção do evento exige uma justificativa."})
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     if "animal" in alteracoes:
         alteracoes["animal"] = _bloquear_animal(alteracoes["animal"])
 
@@ -206,9 +207,8 @@ def salvar_evento_saude(*, instancia: EventoSaude | None = None, **dados: Any) -
 
 
 @transaction.atomic
-def cancelar_evento_saude(*, evento: EventoSaude, motivo: str) -> EventoSaude:
-    if not motivo.strip():
-        raise ValidationError({"motivo": "O cancelamento exige uma justificativa."})
+def cancelar_evento_saude(*, evento: EventoSaude, motivo: str = "") -> EventoSaude:
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     evento = EventoSaude.objects.select_for_update().get(pk=evento.pk)
     if evento.cancelado or not evento.ativo_registro:
         raise ValidationError("Este evento já foi cancelado.")

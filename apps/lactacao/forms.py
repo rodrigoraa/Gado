@@ -61,6 +61,4 @@ class DataObservacaoForm(BootstrapFormMixin, forms.Form):
 
 
 class CancelarLactacaoForm(BootstrapFormMixin, forms.Form):
-    justificativa = forms.CharField(
-        label=_("Justificativa"), widget=forms.Textarea(attrs={"rows": 3})
-    )
+    pass

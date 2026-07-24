@@ -26,6 +26,8 @@ from .models import (
     Raca,
 )
 
+REGISTRO_AUTOMATICO = "Alteração registrada automaticamente pelo sistema."
+
 
 def _validar_salvar(instancia: Any, *, update_fields: list[str] | None = None) -> Any:
     instancia.full_clean()
@@ -214,8 +216,7 @@ def salvar_animal(
 
     sexo_mudou = atual.sexo != sexo_anterior
     nascimento_mudou = atual.data_nascimento != nascimento_anterior
-    if (sexo_mudou or nascimento_mudou) and not justificativa_correcao.strip():
-        raise ValidationError({"justificativa_correcao": _("Justifique a correção cadastral.")})
+    justificativa_correcao = justificativa_correcao.strip() or REGISTRO_AUTOMATICO
     if sexo_mudou:
         _validar_correcao_sexo(animal=atual, novo_sexo=atual.sexo)
     if nascimento_mudou:
@@ -241,10 +242,7 @@ def salvar_animal(
             )
 
     parentesco_mudou = atual.mae_id != mae_anterior_id or atual.pai_id != pai_anterior_id
-    if parentesco_mudou and not justificativa_parentesco.strip():
-        raise ValidationError(
-            {"justificativa_parentesco": _("Justifique a mudança de parentesco.")}
-        )
+    justificativa_parentesco = justificativa_parentesco.strip() or REGISTRO_AUTOMATICO
 
     if sexo_mudou or nascimento_mudou:
         descricao = []
@@ -293,7 +291,7 @@ def inativar_animal(
     *,
     animal: Animal,
     situacao: str,
-    motivo: str,
+    motivo: str = "",
     data_saida: date | None = None,
 ) -> Animal:
     from apps.lactacao.models import Lactacao
@@ -304,8 +302,7 @@ def inativar_animal(
         raise ValidationError({"situacao": _("Este animal já está inativo.")})
     if situacao == Animal.Situacao.ATIVO or situacao not in Animal.Situacao.values:
         raise ValidationError({"situacao": _("Selecione uma situação de saída válida.")})
-    if not motivo.strip():
-        raise ValidationError({"motivo": _("Informe o motivo da saída.")})
+    motivo = motivo.strip() or REGISTRO_AUTOMATICO
     lactacao_ativa = (
         Lactacao.objects.select_for_update()
         .filter(vaca=animal, situacao=Lactacao.Situacao.ATIVA)
@@ -362,10 +359,9 @@ def excluir_animal(*, animal: Animal) -> int:
 
 
 @transaction.atomic
-def reativar_animal(*, animal: Animal, justificativa: str) -> Animal:
+def reativar_animal(*, animal: Animal, justificativa: str = "") -> Animal:
     animal = Animal.objects.select_for_update().get(pk=animal.pk)
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("Informe a justificativa.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     animal.situacao = Animal.Situacao.ATIVO
     animal.data_saida = None
     animal.motivo_saida = ""
@@ -444,11 +440,10 @@ def corrigir_pesagem(
     pesagem: Pesagem,
     peso_kg: Decimal,
     data_pesagem: date,
-    justificativa: str,
+    justificativa: str = "",
 ) -> Pesagem:
     pesagem = Pesagem.objects.select_for_update().select_related("animal").get(pk=pesagem.pk)
-    if not justificativa.strip():
-        raise ValidationError({"justificativa": _("Informe a justificativa da correção.")})
+    justificativa = justificativa.strip() or REGISTRO_AUTOMATICO
     pesagem.peso_kg = peso_kg
     pesagem.data = data_pesagem
     pesagem.observacoes = f"{pesagem.observacoes}\nCorreção: {justificativa.strip()}".strip()

@@ -127,11 +127,7 @@ class OrdenhaDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         contexto = super().get_context_data(**kwargs)
         if self.object.modo == Ordenha.Modo.INDIVIDUAL:
-            contexto["form_conciliacao"] = ConciliacaoOrdenhaForm(
-                initial={
-                    "justificativa_divergencia": self.object.justificativa_divergencia,
-                }
-            )
+            contexto["form_conciliacao"] = ConciliacaoOrdenhaForm()
         return contexto
 
 
@@ -152,7 +148,6 @@ class OrdenhaConciliarView(LoginRequiredMixin, View):
             try:
                 conciliar_ordenha(
                     ordenha=ordenha,
-                    justificativa=form.cleaned_data["justificativa_divergencia"],
                 )
             except ValidationError as erro:
                 _adicionar_erros(form, erro)
@@ -272,7 +267,7 @@ class OrdenhaCancelarView(LoginRequiredMixin, View):
         form = CancelarOrdenhaForm(request.POST)
         if form.is_valid():
             try:
-                cancelar_ordenha(ordenha=ordenha, motivo=form.cleaned_data["motivo"])
+                cancelar_ordenha(ordenha=ordenha)
             except ValidationError as erro:
                 _adicionar_erros(form, erro)
             else:

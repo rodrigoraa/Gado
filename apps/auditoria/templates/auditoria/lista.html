@@ -7,8 +7,8 @@
   <select name="modulo"><option value="">Todos os módulos</option>{% for valor in modulos %}<option value="{{ valor }}" {% if request.GET.modulo == valor %}selected{% endif %}>{{ valor|capfirst }}</option>{% endfor %}</select>
   <button class="btn-app btn-primary-app">Filtrar</button>
 </form>
-<div class="table-surface surface-card"><table class="responsive-table"><thead><tr><th>Quando</th><th>Usuário</th><th>Registro</th><th>Operação</th><th>Justificativa</th></tr></thead><tbody>
-{% for registro in pagina %}<tr><td data-label="Quando">{{ registro.data_hora|date:'d/m/Y H:i' }}</td><td data-label="Usuário">{{ registro.usuario|default:'Sistema' }}</td><td data-label="Registro"><strong>{{ registro.modulo }} · {{ registro.entidade }}</strong><small>{{ registro.identificador }}</small></td><td data-label="Operação"><span class="status-pill">{{ registro.operacao }}</span></td><td data-label="Justificativa">{{ registro.justificativa|default:'—' }}</td></tr>{% empty %}<tr><td colspan="5">Nenhum registro encontrado.</td></tr>{% endfor %}
+<div class="table-surface surface-card"><table class="responsive-table"><thead><tr><th>Quando</th><th>Usuário</th><th>Registro</th><th>Operação</th><th>Detalhes</th></tr></thead><tbody>
+{% for registro in pagina %}<tr><td data-label="Quando">{{ registro.data_hora|date:'d/m/Y H:i' }}</td><td data-label="Usuário">{{ registro.usuario|default:'Sistema' }}</td><td data-label="Registro"><strong>{{ registro.modulo }} · {{ registro.entidade }}</strong><small>{{ registro.identificador }}</small></td><td data-label="Operação"><span class="status-pill">{{ registro.operacao }}</span></td><td data-label="Detalhes">{{ registro.justificativa|default:'—' }}</td></tr>{% empty %}<tr><td colspan="5">Nenhum registro encontrado.</td></tr>{% endfor %}
 </tbody></table></div>
 {% include "shared/pagination.html" with pagina=pagina %}
 {% endblock %}

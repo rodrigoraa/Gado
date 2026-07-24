@@ -185,7 +185,6 @@ class LactacaoCancelarView(LoginRequiredMixin, View):
             try:
                 cancelar_lactacao(
                     lactacao=lactacao,
-                    justificativa=form.cleaned_data["justificativa"],
                 )
             except ValidationError as erro:
                 _erros_servico(form, erro)

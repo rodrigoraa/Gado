@@ -129,7 +129,7 @@ def criar_lactacao(vaca: Animal) -> Lactacao:
     )
 
 
-def test_ordenha_soma_individual_e_exige_justificativa_para_divergencia() -> None:
+def test_ordenha_soma_individual_e_registra_divergencia_automaticamente() -> None:
     vaca = criar_vaca()
     criar_lactacao(vaca)
     ordenha = salvar_ordenha(
@@ -145,10 +145,10 @@ def test_ordenha_soma_individual_e_exige_justificativa_para_divergencia() -> Non
     assert ordenha.quantidade_vacas == 1
     assert ordenha.total_individual == Decimal("8.500")
     assert ordenha.diferenca_individual == Decimal("1.500")
-    with pytest.raises(ValidationError):
-        conciliar_ordenha(ordenha=ordenha)
-    conciliada = conciliar_ordenha(ordenha=ordenha, justificativa="Medição do tanque conferida.")
-    assert conciliada.justificativa_divergencia
+    conciliada = conciliar_ordenha(ordenha=ordenha)
+    assert conciliada.justificativa_divergencia == (
+        "Alteração registrada automaticamente pelo sistema."
+    )
 
 
 def test_mes_soma_ordenha_uma_vez_mesmo_com_varias_vacas() -> None:

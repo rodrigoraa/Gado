@@ -39,15 +39,10 @@ class AlterarDataCoberturaForm(BootstrapFormMixin, forms.Form):
     nova_data = forms.DateField(
         label=_("Nova data"), widget=forms.DateInput(attrs={"type": "date"})
     )
-    justificativa = forms.CharField(
-        label=_("Justificativa"), widget=forms.Textarea(attrs={"rows": 3})
-    )
 
 
 class JustificativaForm(BootstrapFormMixin, forms.Form):
-    justificativa = forms.CharField(
-        label=_("Justificativa"), widget=forms.Textarea(attrs={"rows": 3})
-    )
+    pass
 
 
 class DiagnosticoGestacaoForm(BootstrapFormMixin, forms.ModelForm):
@@ -181,10 +176,6 @@ BezerroFormSet = forms.formset_factory(
 
 
 class CorrecaoPartoForm(BootstrapFormMixin, forms.ModelForm):
-    justificativa = forms.CharField(
-        label=_("Justificativa da correção"), widget=forms.Textarea(attrs={"rows": 3})
-    )
-
     class Meta:
         model = Parto
         fields = (

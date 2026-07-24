@@ -163,7 +163,7 @@ def test_listas_htmx_nao_interceptam_links_para_paginas_completas(
         assert "hx-boost" not in conteudo
 
 
-def test_conciliacao_individual_exige_justificativa_e_filtra_vacas(
+def test_conciliacao_individual_registra_automaticamente_e_filtra_vacas(
     client, django_user_model
 ) -> None:  # type: ignore[no-untyped-def]
     autenticar(client, django_user_model, username="conciliacao-ui")
@@ -201,19 +201,13 @@ def test_conciliacao_individual_exige_justificativa_e_filtra_vacas(
     )
     url = reverse("leite:ordenha_conciliar", kwargs={"pk": ordenha.pk})
 
-    sem_justificativa = client.post(url, {"justificativa_divergencia": ""})
-    assert sem_justificativa.status_code == 422
-    ordenha.refresh_from_db()
-    assert ordenha.justificativa_divergencia == ""
-
-    conciliada = client.post(
-        url,
-        {"justificativa_divergencia": "Medição do tanque conferida pelo operador."},
-    )
+    conciliada = client.post(url)
     assert conciliada.status_code == 302
     assert conciliada.url == reverse("leite:ordenha_detalhe", kwargs={"pk": ordenha.pk})
     ordenha.refresh_from_db()
-    assert ordenha.justificativa_divergencia == "Medição do tanque conferida pelo operador."
+    assert ordenha.justificativa_divergencia == (
+        "Alteração registrada automaticamente pelo sistema."
+    )
 
 
 def test_lista_de_recebimentos_expoe_download_do_anexo(client, django_user_model) -> None:  # type: ignore[no-untyped-def]

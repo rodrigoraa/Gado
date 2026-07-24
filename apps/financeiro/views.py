@@ -329,7 +329,6 @@ class CancelarView(LoginRequiredMixin, View):
             try:
                 self.service(
                     **{self.model._meta.model_name.replace("leite", ""): objeto},
-                    motivo=form.cleaned_data["motivo"],
                 )
             except TypeError:
                 # As subclasses usam argumentos explícitos; este ramo não deve ocorrer.
@@ -361,7 +360,7 @@ class EntregaCancelarView(CancelarView):
         form = CancelamentoForm(request.POST)
         if form.is_valid():
             try:
-                self.service(**{argumento: objeto}, motivo=form.cleaned_data["motivo"])
+                self.service(**{argumento: objeto})
             except ValidationError as erro:
                 _adicionar_erros(form, erro)
             else:

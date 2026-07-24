@@ -129,9 +129,6 @@ class InativacaoAnimalForm(BootstrapFormMixin, forms.Form):
     data_saida = forms.DateField(
         label=_("Data de saída"), widget=forms.DateInput(attrs={"type": "date"})
     )
-    motivo = forms.CharField(
-        label=_("Motivo/justificativa"), widget=forms.Textarea(attrs={"rows": 3})
-    )
 
 
 class MovimentacaoLoteForm(BootstrapFormMixin, forms.ModelForm):

@@ -234,7 +234,6 @@ class AnimalInativarView(LoginRequiredMixin, View):
                 inativar_animal(
                     animal=animal,
                     situacao=form.cleaned_data["situacao"],
-                    motivo=form.cleaned_data["motivo"],
                     data_saida=form.cleaned_data["data_saida"],
                 )
             except ValidationError as erro:

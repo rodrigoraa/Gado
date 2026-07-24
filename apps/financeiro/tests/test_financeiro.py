@@ -178,13 +178,15 @@ def test_fechamento_pagamentos_parcial_total_e_excesso() -> None:
     assert entrega.situacao == EntregaLeite.Situacao.PAGA
     assert entrega.data_pagamento_integral == hoje
 
-    with pytest.raises(ValidationError):
-        registrar_recebimento(
-            fechamento=fechamento,
-            data=hoje,
-            valor=Decimal("5.00"),
-            forma_pagamento=RecebimentoLeite.FormaPagamento.PIX,
-        )
+    excedente = registrar_recebimento(
+        fechamento=fechamento,
+        data=hoje,
+        valor=Decimal("5.00"),
+        forma_pagamento=RecebimentoLeite.FormaPagamento.PIX,
+    )
+    assert excedente.justificativa_excesso == (
+        "Alteração registrada automaticamente pelo sistema."
+    )
 
 
 def test_cancelamento_do_fechamento_libera_entrega() -> None:
