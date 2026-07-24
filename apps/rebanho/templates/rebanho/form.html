@@ -23,3 +23,22 @@
   </form>
 </section>
 {% endblock %}
+
+{% block scripts %}
+{% if form.tipo_animal and form.mae %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tipoAnimal = document.getElementById("id_tipo_animal");
+  const campoMae = document.querySelector('[data-field-name="mae"]');
+  if (!tipoAnimal || !campoMae) return;
+
+  function atualizarCampoMae() {
+    campoMae.hidden = tipoAnimal.value !== "BEZERRO";
+  }
+
+  tipoAnimal.addEventListener("change", atualizarCampoMae);
+  atualizarCampoMae();
+});
+</script>
+{% endif %}
+{% endblock %}

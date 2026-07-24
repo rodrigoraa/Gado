@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from .models import Animal, Lote, MovimentacaoLote, Pesagem, Raca
@@ -39,7 +40,7 @@ class AnimalForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = Animal
-        fields = ("nome", "cor", "sexo", "tipo_animal")
+        fields = ("nome", "cor", "sexo", "tipo_animal", "mae")
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, **kwargs)
@@ -47,12 +48,30 @@ class AnimalForm(BootstrapFormMixin, forms.ModelForm):
             self.initial["sexo"] = Animal.Sexo.FEMEA
         self.fields["sexo"].required = True
         self.fields["tipo_animal"].required = True
+        self.fields["mae"].required = False
+        self.fields["mae"].label = _("Mãe (opcional)")
+        self.fields["mae"].help_text = _("São exibidas somente as vacas ativas.")
+        filtro_maes = Q(
+            sexo=Animal.Sexo.FEMEA,
+            tipo_animal=Animal.TipoAnimal.VACA,
+            situacao=Animal.Situacao.ATIVO,
+        )
+        if self.instance.mae_id:
+            filtro_maes |= Q(pk=self.instance.mae_id)
+        maes = Animal.objects.filter(filtro_maes)
+        if self.instance.pk:
+            maes = maes.exclude(pk=self.instance.pk)
+        self.fields["mae"].queryset = maes.order_by(
+            "nome",
+            "identificacao",
+            "identificacao_provisoria",
+        )
         self.order_fields(("nome", "cor", "sexo", "tipo_animal", "mae"))
 
 
 class CadastroBezerroForm(AnimalForm):
     class Meta(AnimalForm.Meta):
-        fields = (*AnimalForm.Meta.fields, "mae")
+        fields = AnimalForm.Meta.fields
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, **kwargs)
@@ -61,10 +80,6 @@ class CadastroBezerroForm(AnimalForm):
         self.fields["tipo_animal"].required = False
         self.fields["mae"].required = False
         self.fields["mae"].label = _("Mãe, se conhecida")
-        self.fields["mae"].queryset = Animal.objects.filter(
-            sexo=Animal.Sexo.FEMEA,
-            situacao=Animal.Situacao.ATIVO,
-        ).order_by("nome")
 
     def clean_tipo_animal(self) -> str:
         return Animal.TipoAnimal.BEZERRO

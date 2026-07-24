@@ -150,7 +150,10 @@ class AnimalFormView(LoginRequiredMixin, View):
             )
         else:
             titulo = "Cadastrar animal"
-            descricao = "Informe nome, sexo e tipo de animal. A cor é opcional."
+            descricao = (
+                "Informe nome, sexo e tipo de animal. A cor é opcional. "
+                "Ao escolher bezerro, você também pode informar a mãe."
+            )
         return {
             "form": form,
             "animal": self.animal,

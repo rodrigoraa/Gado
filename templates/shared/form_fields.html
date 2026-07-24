@@ -2,7 +2,7 @@
 {% if form.non_field_errors %}<div class="form-alert">{{ form.non_field_errors }}</div>{% endif %}
 <div class="form-grid">
   {% for field in form.visible_fields %}
-    <div class="field-wrap {% if field.field.widget.input_type == 'checkbox' %}field-check{% endif %}">
+    <div class="field-wrap {% if field.field.widget.input_type == 'checkbox' %}field-check{% endif %}" data-field-name="{{ field.name }}">
       {% if field.field.widget.input_type == 'checkbox' %}{{ field }}{% endif %}
       <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span aria-label="obrigatório">*</span>{% endif %}</label>
       {% if field.field.widget.input_type != 'checkbox' %}{{ field }}{% endif %}

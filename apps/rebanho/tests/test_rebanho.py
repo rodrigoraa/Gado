@@ -270,15 +270,29 @@ def test_rotas_exigem_login(client) -> None:  # type: ignore[no-untyped-def]
     assert reverse("login") in resposta.url
 
 
-def test_formulario_de_animal_tem_somente_os_quatro_campos_solicitados() -> None:
+def test_formulario_de_animal_inclui_mae_opcional_para_bezerro() -> None:
     formulario = AnimalForm()
 
-    assert list(formulario.fields) == ["nome", "cor", "sexo", "tipo_animal"]
+    assert list(formulario.fields) == ["nome", "cor", "sexo", "tipo_animal", "mae"]
     assert formulario.fields["nome"].required is True
     assert formulario.fields["cor"].required is False
     assert formulario.fields["sexo"].required is True
     assert formulario.fields["tipo_animal"].required is True
+    assert formulario.fields["mae"].required is False
     assert formulario["sexo"].value() == Animal.Sexo.FEMEA
+
+
+def test_formulario_de_animal_lista_somente_vacas_ativas_como_mae() -> None:
+    vaca_ativa = animal(nome="Mimosa", tipo_animal=Animal.TipoAnimal.VACA)
+    novilha = animal(nome="Estrela", tipo_animal=Animal.TipoAnimal.NOVILHA)
+    vaca_inativa = animal(nome="Lua", tipo_animal=Animal.TipoAnimal.VACA)
+    Animal.objects.filter(pk=vaca_inativa.pk).update(situacao=Animal.Situacao.VENDIDO)
+
+    maes_disponiveis = set(AnimalForm().fields["mae"].queryset)
+
+    assert vaca_ativa in maes_disponiveis
+    assert novilha not in maes_disponiveis
+    assert vaca_inativa not in maes_disponiveis
 
 
 def test_formulario_de_bezerro_acrescenta_somente_a_mae_opcional() -> None:
@@ -312,6 +326,42 @@ def test_cadastro_de_animal_salva_tipo_informado(client, django_user_model) -> N
     assert cadastrado.tipo_animal == Animal.TipoAnimal.VACA
     assert not cadastrado.foto
     assert cadastrado.data_nascimento is None
+
+
+def test_cadastro_de_bezerro_pelo_formulario_principal_associa_a_mae(
+    client, django_user_model
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="cadastro-bezerro-com-mae",
+        password="teste",
+    )
+    client.force_login(usuario)
+    mae = animal(nome="Mimosa", tipo_animal=Animal.TipoAnimal.VACA)
+
+    pagina = client.get(reverse("rebanho:animal_novo"))
+    conteudo = pagina.content.decode()
+
+    assert pagina.status_code == 200
+    assert 'data-field-name="mae"' in conteudo
+    assert "Mãe (opcional)" in conteudo
+    assert "Mimosa" in conteudo
+    assert 'tipoAnimal.value !== "BEZERRO"' in conteudo
+
+    resposta = client.post(
+        reverse("rebanho:animal_novo"),
+        {
+            "nome": "Pingo",
+            "cor": "Malhado",
+            "sexo": Animal.Sexo.MACHO,
+            "tipo_animal": Animal.TipoAnimal.BEZERRO,
+            "mae": str(mae.pk),
+        },
+    )
+
+    assert resposta.status_code == 302
+    bezerro = Animal.objects.get(nome="Pingo")
+    assert bezerro.tipo_animal == Animal.TipoAnimal.BEZERRO
+    assert bezerro.mae == mae
 
 
 @pytest.mark.parametrize(
@@ -348,7 +398,7 @@ def test_cadastro_rejeita_sexo_incompativel_com_tipo(
 def test_cadastro_rapido_de_bezerro_define_nascimento_como_hoje(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(username="cadastro-bezerro", password="teste")
     client.force_login(usuario)
-    mae = animal(nome="Mimosa")
+    mae = animal(nome="Mimosa", tipo_animal=Animal.TipoAnimal.VACA)
 
     resposta = client.post(
         reverse("rebanho:bezerro_novo"),
