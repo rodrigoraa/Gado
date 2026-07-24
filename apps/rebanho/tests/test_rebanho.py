@@ -449,7 +449,11 @@ def test_lista_autenticada_renderiza_e_htmx_retorna_somente_cartoes(
 
     pagina = client.get(reverse("rebanho:animais"))
     assert pagina.status_code == 200
-    assert 'hx-target="#animal-results"' in pagina.content.decode()
+    conteudo_pagina = pagina.content.decode()
+    assert 'hx-target="#animal-results"' in conteudo_pagina
+    assert "Cadastrar animal" in conteudo_pagina
+    assert "Cadastrar bezerro" not in conteudo_pagina
+    assert "Cadastrar novilha" not in conteudo_pagina
 
     parcial = client.get(
         reverse("rebanho:animais"),
@@ -469,6 +473,7 @@ def test_lista_autenticada_renderiza_e_htmx_retorna_somente_cartoes(
     assert "Dados" in detalhe.content.decode()
     assert "Coberturas" in detalhe.content.decode()
     assert "dados-grafico-peso" not in detalhe.content.decode()
+    assert "Cadastrar bezerro" not in detalhe.content.decode()
 
 
 def test_botoes_do_rebanho_filtram_os_quatro_tipos(

@@ -48,9 +48,7 @@ def test_dashboard_exibe_somente_as_acoes_essenciais(client, django_user_model):
     assert resposta.status_code == 200
     conteudo = resposta.content.decode()
     for texto in (
-            "Cadastrar animal",
-            "Cadastrar bezerro",
-            "Cadastrar novilha",
+        "Cadastrar animal",
         "Registrar cobertura",
         "Registrar leite",
         "Leite tirado hoje",
@@ -62,6 +60,8 @@ def test_dashboard_exibe_somente_as_acoes_essenciais(client, django_user_model):
     )[1].split("</section>", maxsplit=1)[0]
     for texto in ("Diagnóstico", "Destino", "Financeiro", "Medicamento", "Pesagem"):
         assert texto not in acoes_principais
+    assert "Cadastrar bezerro" not in conteudo
+    assert "Cadastrar novilha" not in conteudo
 
 
 @pytest.mark.django_db

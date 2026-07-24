@@ -27,7 +27,6 @@
   <article class="surface-card">
     <div class="section-heading">
       <div><h2>Bezerros</h2><p>Animais ligados a esta mãe.</p></div>
-      {% if animal.sexo == 'F' %}<a class="btn-app btn-primary-app" href="{% url 'rebanho:bezerro_novo' %}?mae={{ animal.pk }}">Cadastrar bezerro</a>{% endif %}
     </div>
     <div class="list-stack">
       {% for filho in filhos %}
