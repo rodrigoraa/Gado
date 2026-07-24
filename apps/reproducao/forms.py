@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps.rebanho.forms import BootstrapFormMixin
@@ -17,14 +18,21 @@ class CoberturaForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, **kwargs)
-        self.fields["vaca"].queryset = Animal.objects.filter(
-            sexo=Animal.Sexo.FEMEA, situacao=Animal.Situacao.ATIVO
+        idade_adulta = Q(data_nascimento__isnull=True) | Q(
+            data_nascimento__lte=Animal.data_limite_bezerro()
         )
-        self.fields["touro"].queryset = Animal.objects.filter(
-            sexo=Animal.Sexo.MACHO, situacao=Animal.Situacao.ATIVO
-        )
+        elegiveis = Animal.objects.filter(
+            idade_adulta,
+            situacao=Animal.Situacao.ATIVO,
+        ).order_by("nome", "identificacao")
+        self.fields["vaca"].queryset = elegiveis.filter(sexo=Animal.Sexo.FEMEA)
+        self.fields["touro"].queryset = elegiveis.filter(sexo=Animal.Sexo.MACHO)
         self.fields["touro"].required = False
-        self.fields["touro"].label = _("Boi, se conhecido")
+        self.fields["touro"].label = _("Boi adulto, se conhecido")
+        if not self.is_bound and not self.initial.get("touro"):
+            bois = list(self.fields["touro"].queryset.values_list("pk", flat=True)[:2])
+            if len(bois) == 1:
+                self.initial["touro"] = bois[0]
 
 
 class AlterarDataCoberturaForm(BootstrapFormMixin, forms.Form):

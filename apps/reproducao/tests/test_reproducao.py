@@ -39,6 +39,84 @@ def test_formulario_de_cobertura_tem_apenas_vaca_boi_e_data() -> None:
     assert formulario.fields["touro"].required is False
 
 
+def test_formulario_de_cobertura_exclui_bezerros_e_bezerras() -> None:
+    bezerra = salvar_animal(
+        identificacao="BEZERRA-COB",
+        sexo=Animal.Sexo.FEMEA,
+        data_nascimento=timezone.localdate(),
+    )
+    bezerro = salvar_animal(
+        identificacao="BEZERRO-COB",
+        sexo=Animal.Sexo.MACHO,
+        data_nascimento=timezone.localdate(),
+    )
+    vaca_adulta = salvar_animal(
+        identificacao="VACA-COB",
+        sexo=Animal.Sexo.FEMEA,
+        data_nascimento=timezone.localdate() - timedelta(days=365 * 3),
+    )
+    boi_adulto = salvar_animal(
+        identificacao="BOI-COB",
+        sexo=Animal.Sexo.MACHO,
+        data_nascimento=timezone.localdate() - timedelta(days=365 * 3),
+    )
+
+    formulario = CoberturaForm()
+    vacas = set(formulario.fields["vaca"].queryset.values_list("pk", flat=True))
+    bois = set(formulario.fields["touro"].queryset.values_list("pk", flat=True))
+
+    assert vaca_adulta.pk in vacas
+    assert boi_adulto.pk in bois
+    assert bezerra.pk not in vacas
+    assert bezerro.pk not in bois
+    assert formulario.initial["touro"] == boi_adulto.pk
+
+
+def test_formulario_nao_preseleciona_quando_existem_dois_bois_adultos() -> None:
+    for indice in range(2):
+        salvar_animal(
+            identificacao=f"BOI-PRE-{indice}",
+            sexo=Animal.Sexo.MACHO,
+            data_nascimento=timezone.localdate() - timedelta(days=365 * 3),
+        )
+
+    assert not CoberturaForm().initial.get("touro")
+
+
+def test_servico_rejeita_bezerro_macho_como_reprodutor(vaca: Animal) -> None:
+    bezerro = salvar_animal(
+        identificacao="BEZERRO-REPRO",
+        sexo=Animal.Sexo.MACHO,
+        data_nascimento=timezone.localdate() - timedelta(days=60),
+    )
+
+    with pytest.raises(ValidationError, match="bezerro macho"):
+        criar_cobertura(vaca, bezerro)
+
+
+def test_cadastro_de_cobertura_redireciona_para_o_detalhe(
+    client, django_user_model, vaca: Animal, touro: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="cobertura-redirect",
+        password="teste",
+    )
+    client.force_login(usuario)
+
+    resposta = client.post(
+        reverse("reproducao:cobertura_nova"),
+        {
+            "vaca": str(vaca.pk),
+            "touro": str(touro.pk),
+            "data": timezone.localdate().strftime("%d/%m/%Y"),
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == reverse("reproducao:cobertura_nova")
+    assert Cobertura.objects.filter(vaca=vaca, touro=touro).exists()
+
+
 @pytest.fixture
 def vaca() -> Animal:
     return salvar_animal(

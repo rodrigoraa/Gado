@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from calendar import monthrange
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -227,12 +229,27 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
             partes.append(f"{meses} {'meses' if meses != 1 else 'mês'}")
         return " e ".join(partes)
 
-    def _valor_configuracao(self, campo: str, padrao: int) -> int:
+    @classmethod
+    def data_limite_bezerro(cls, referencia: date | None = None) -> date:
+        referencia = referencia or timezone.localdate()
         try:
-            configuracao = ConfiguracaoSistema.obter()
-            return int(getattr(configuracao, campo, padrao))
+            limite_meses = int(ConfiguracaoSistema.obter().idade_bezerro_meses)
         except Exception:
-            return int(getattr(settings, campo.upper(), padrao))
+            limite_meses = int(getattr(settings, "IDADE_BEZERRO_MESES", 12))
+        mes_absoluto = referencia.year * 12 + referencia.month - 1 - limite_meses
+        ano, indice_mes = divmod(mes_absoluto, 12)
+        mes = indice_mes + 1
+        dia = min(referencia.day, monthrange(ano, mes)[1])
+        return date(ano, mes, dia)
+
+    def eh_bezerro_em(self, referencia: date | None = None) -> bool:
+        if not self.data_nascimento:
+            return False
+        return self.data_nascimento > self.data_limite_bezerro(referencia)
+
+    @property
+    def eh_bezerro(self) -> bool:
+        return self.eh_bezerro_em()
 
     @property
     def categoria(self) -> str:
@@ -242,8 +259,7 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
         idade_em_meses = self.idade_em_meses
         if idade_em_meses is None:
             return _("Animal")
-        limite_bezerro = self._valor_configuracao("idade_bezerro_meses", 12)
-        if idade_em_meses < limite_bezerro:
+        if self.eh_bezerro:
             if self.sexo == self.Sexo.FEMEA:
                 return _("Bezerra")
             return _("Bezerro")

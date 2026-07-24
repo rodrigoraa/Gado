@@ -15,6 +15,7 @@ from django.views.generic import DetailView, ListView
 from .forms import (
     AnimalForm,
     CadastroBezerroForm,
+    CadastroNovilhaForm,
     InativacaoAnimalForm,
     LoteForm,
     MovimentacaoLoteForm,
@@ -110,15 +111,21 @@ class AnimalFormView(LoginRequiredMixin, View):
     template_name = "rebanho/form.html"
     animal: Animal | None = None
     bezerro = False
+    novilha = False
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         self.bezerro = bool(kwargs.get("bezerro"))
+        self.novilha = bool(kwargs.get("novilha"))
         if "animal_id" in kwargs:
             self.animal = get_object_or_404(Animal, pk=kwargs["animal_id"])
         return super().dispatch(request, *args, **kwargs)
 
     def _form_class(self):  # type: ignore[no-untyped-def]
-        return CadastroBezerroForm if self.bezerro else AnimalForm
+        if self.bezerro:
+            return CadastroBezerroForm
+        if self.novilha:
+            return CadastroNovilhaForm
+        return AnimalForm
 
     def _contexto(self, form: AnimalForm) -> dict[str, object]:
         if self.animal:
@@ -130,6 +137,11 @@ class AnimalFormView(LoginRequiredMixin, View):
                 "Informe o nome. Cor, foto, sexo e mãe são opcionais. "
                 "O nascimento será registrado como hoje."
             )
+        elif self.novilha:
+            titulo = "Cadastrar novilha"
+            descricao = (
+                "Informe o nome e a data de nascimento. O sexo será registrado como fêmea."
+            )
         else:
             titulo = "Cadastrar animal"
             descricao = "Somente o nome é obrigatório. Cor, foto e sexo são opcionais."
@@ -139,6 +151,7 @@ class AnimalFormView(LoginRequiredMixin, View):
             "titulo": titulo,
             "descricao": descricao,
             "cadastro_bezerro": self.bezerro,
+            "cadastro_novilha": self.novilha,
         }
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
@@ -166,8 +179,10 @@ class AnimalFormView(LoginRequiredMixin, View):
                         "origem": Animal.Origem.NASCIDO_SITIO,
                     }
                 )
+            elif self.novilha and self.animal is None:
+                dados["sexo"] = Animal.Sexo.FEMEA
             try:
-                animal = salvar_animal(
+                salvar_animal(
                     animal=self.animal,
                     justificativa_correcao=(
                         "Sexo atualizado pelo cadastro simplificado." if self.animal else ""
@@ -178,7 +193,7 @@ class AnimalFormView(LoginRequiredMixin, View):
                 _adicionar_erro_servico(form, erro)
             else:
                 messages.success(request, "Animal salvo com sucesso.")
-                return redirect("rebanho:animal_detalhe", animal_id=animal.pk)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -297,7 +312,7 @@ class MovimentacaoCreateView(LoginRequiredMixin, View):
         form = MovimentacaoLoteForm(request.POST, animal=animal)
         if form.is_valid():
             try:
-                movimento = movimentar_animal(
+                movimentar_animal(
                     animal=form.cleaned_data["animal"],
                     novo_lote=form.cleaned_data["novo_lote"],
                     data_movimentacao=form.cleaned_data["data"],
@@ -308,7 +323,7 @@ class MovimentacaoCreateView(LoginRequiredMixin, View):
                 _adicionar_erro_servico(form, erro)
             else:
                 messages.success(request, "Mudança de lote registrada.")
-                return redirect("rebanho:animal_detalhe", animal_id=movimento.animal_id)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -334,7 +349,7 @@ class PesagemCreateView(LoginRequiredMixin, View):
         form = PesagemForm(request.POST, animal=animal)
         if form.is_valid():
             try:
-                pesagem = registrar_pesagem(
+                registrar_pesagem(
                     animal=form.cleaned_data["animal"],
                     data_pesagem=form.cleaned_data["data"],
                     peso_kg=form.cleaned_data["peso_kg"],
@@ -345,7 +360,7 @@ class PesagemCreateView(LoginRequiredMixin, View):
                 _adicionar_erro_servico(form, erro)
             else:
                 messages.success(request, "Pesagem registrada.")
-                return redirect("rebanho:animal_detalhe", animal_id=pesagem.animal_id)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -419,7 +434,7 @@ class CadastroSimplesFormView(LoginRequiredMixin, View):
                 _adicionar_erro_servico(form, erro)
             else:
                 messages.success(request, "Cadastro salvo com sucesso.")
-                return redirect(self.url_sucesso)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,

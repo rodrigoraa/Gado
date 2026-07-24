@@ -94,6 +94,32 @@ class CadastroBezerroForm(AnimalForm):
         ).order_by("nome")
 
 
+class CadastroNovilhaForm(AnimalForm):
+    data_nascimento = forms.DateField(
+        label=_("Data de nascimento"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    class Meta(AnimalForm.Meta):
+        fields = (*AnimalForm.Meta.fields, "data_nascimento")
+
+    def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        super().__init__(*args, **kwargs)
+        self.fields["sexo"].initial = Animal.Sexo.FEMEA
+        self.fields["sexo"].widget = forms.HiddenInput()
+        self.order_fields(
+            ("nome", "cor", "foto", "remover_foto", "sexo", "data_nascimento")
+        )
+
+    def clean_data_nascimento(self):  # type: ignore[no-untyped-def]
+        data_nascimento = self.cleaned_data["data_nascimento"]
+        if data_nascimento > Animal.data_limite_bezerro():
+            raise ValidationError(
+                _("Pela data informada, este animal ainda pertence à categoria bezerra.")
+            )
+        return data_nascimento
+
+
 class InativacaoAnimalForm(BootstrapFormMixin, forms.Form):
     situacao = forms.ChoiceField(
         label=_("Nova situação"),

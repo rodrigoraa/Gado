@@ -91,7 +91,7 @@ class LactacaoCreateView(LoginRequiredMixin, View):
         form = LactacaoForm(request.POST, parto=parto_url)
         if form.is_valid():
             try:
-                lactacao = iniciar_lactacao(
+                iniciar_lactacao(
                     vaca=form.cleaned_data["vaca"],
                     parto=form.cleaned_data["parto"],
                     data_inicio=form.cleaned_data["data_inicio"],
@@ -101,7 +101,7 @@ class LactacaoCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Lactação iniciada.")
-                return redirect("lactacao:detalhe", lactacao_id=lactacao.pk)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,

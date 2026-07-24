@@ -11,11 +11,11 @@
   <meta name="robots" content="noindex,nofollow">
   <title>{% block title %}Gestão Rural{% endblock %}</title>
   <link href="{% static 'vendor/bootstrap.min.css' %}" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260723-9">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260723-10">
   <script defer src="{% static 'vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
   <script defer src="{% static 'vendor/chart.umd.min.js' %}"></script>
-  <script defer src="{% static 'js/app.js' %}"></script>
+  <script defer src="{% static 'js/app.js' %}?v=20260723-10"></script>
   {% block head %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

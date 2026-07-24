@@ -7,6 +7,7 @@ ROTAS_AUTENTICADAS = (
     "/alertas/",
     "/rebanho/",
     "/rebanho/animais/novo/",
+    "/rebanho/novilhas/nova/",
     "/rebanho/racas/",
     "/rebanho/lotes/",
     "/reproducao/",

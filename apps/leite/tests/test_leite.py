@@ -57,6 +57,24 @@ def test_formulario_registra_total_dos_dois_turnos() -> None:
     assert str(ordenha).startswith("2 Turnos")
 
 
+def test_cadastro_de_leite_redireciona_para_o_detalhe(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(username="leite-redirect", password="teste")
+    client.force_login(usuario)
+
+    resposta = client.post(
+        reverse("leite:ordenha_nova"),
+        {
+            "data": timezone.localdate().isoformat(),
+            "periodo": Ordenha.Periodo.OUTRO,
+            "quantidade_total": "35.500",
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == reverse("leite:ordenha_nova")
+    assert Ordenha.objects.filter(quantidade_total=Decimal("35.500")).exists()
+
+
 def test_total_de_dois_turnos_nao_pode_ser_misturado_com_turno_separado() -> None:
     hoje = timezone.localdate()
     salvar_ordenha(

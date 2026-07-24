@@ -48,8 +48,9 @@ def test_dashboard_exibe_somente_as_acoes_essenciais(client, django_user_model):
     assert resposta.status_code == 200
     conteudo = resposta.content.decode()
     for texto in (
-        "Cadastrar animal",
-        "Cadastrar bezerro",
+            "Cadastrar animal",
+            "Cadastrar bezerro",
+            "Cadastrar novilha",
         "Registrar cobertura",
         "Registrar leite",
         "Leite tirado hoje",

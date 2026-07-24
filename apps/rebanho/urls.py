@@ -14,6 +14,12 @@ urlpatterns = [
         name="bezerro_novo",
     ),
     path(
+        "novilhas/nova/",
+        views.AnimalFormView.as_view(),
+        {"novilha": True},
+        name="novilha_nova",
+    ),
+    path(
         "animais/<uuid:animal_id>/",
         views.AnimalDetailView.as_view(),
         name="animal_detalhe",

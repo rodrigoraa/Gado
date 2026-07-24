@@ -424,3 +424,33 @@ def test_uploads_financeiros_registram_metadados_obrigatorios(settings, tmp_path
     assert recebido.nome_original == "comprovante.pdf"
     assert recebido.mime_type == "application/pdf"
     assert recebido.tamanho_bytes == len(comprovante)
+
+
+def test_cadastro_de_laticinio_permanece_no_formulario(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="laticinio-redirect",
+        password="teste",
+    )
+    client.force_login(usuario)
+    url = reverse("financeiro:laticinio_novo")
+
+    resposta = client.post(
+        url,
+        {
+            "razao_social": "Comprador contínuo",
+            "nome_fantasia": "",
+            "cpf_cnpj": "",
+            "telefone": "",
+            "email": "",
+            "endereco": "",
+            "codigo_produtor": "",
+            "dia_fechamento": "30",
+            "dia_pagamento": "10",
+            "observacoes": "",
+            "ativo": "on",
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == url
+    assert Laticinio.objects.filter(razao_social="Comprador contínuo").exists()

@@ -145,7 +145,7 @@ class CadastroFormView(LoginRequiredMixin, View):
                 _adicionar_erros(form, erro)
             else:
                 messages.success(request, "Registro salvo com sucesso.")
-                return redirect(self.sucesso_url)
+                return redirect(request.get_full_path())
         return render(
             request, self.template_name, {"form": form, "titulo": self.titulo}, status=422
         )
@@ -228,7 +228,7 @@ class DescarteLeiteView(LoginRequiredMixin, View):
                 _adicionar_erros(form, erro)
             else:
                 messages.success(request, "Descarte de leite registrado.")
-                return redirect("saude:tratamento_detalhe", pk=tratamento.pk)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,

@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.dateparse import parse_date
 from django.views import View
 from django.views.generic import DetailView, ListView
@@ -200,10 +200,6 @@ class CadastroFormView(LoginRequiredMixin, View):
     def apos_salvar(self, request: HttpRequest, objeto: Any) -> None:
         del request, objeto
 
-    def get_sucesso_url(self, objeto: Any) -> str:
-        del objeto
-        return str(self.sucesso_url)
-
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.form_class(request.POST, request.FILES, instance=self.objeto)
         if form.is_valid():
@@ -214,7 +210,7 @@ class CadastroFormView(LoginRequiredMixin, View):
             else:
                 messages.success(request, self.mensagem_sucesso)
                 self.apos_salvar(request, objeto)
-                return redirect(self.get_sucesso_url(objeto))
+                return redirect(request.get_full_path())
         return render(
             request, self.template_name, {"form": form, "titulo": self.titulo}, status=422
         )
@@ -227,11 +223,6 @@ class OrdenhaFormView(CadastroFormView):
     sucesso_url = reverse_lazy("leite:ordenhas")
     mensagem_sucesso = "Leite registrado com sucesso."
 
-    def get_sucesso_url(self, objeto: Ordenha) -> str:
-        if objeto.modo == Ordenha.Modo.INDIVIDUAL:
-            return reverse("leite:ordenha_detalhe", kwargs={"pk": objeto.pk})
-        return super().get_sucesso_url(objeto)
-
 
 class ProducaoFormView(CadastroFormView):
     model = ProducaoAnimal
@@ -240,9 +231,6 @@ class ProducaoFormView(CadastroFormView):
     sucesso_url = reverse_lazy("leite:producoes")
     mensagem_sucesso = "Produção individual salva com sucesso."
     campos_iniciais_url = ("ordenha", "vaca")
-
-    def get_sucesso_url(self, objeto: ProducaoAnimal) -> str:
-        return reverse("leite:ordenha_detalhe", kwargs={"pk": objeto.ordenha_id})
 
     def apos_salvar(self, request: HttpRequest, objeto: ProducaoAnimal) -> None:
         if vaca_em_carencia(vaca=objeto.vaca, ordenha=objeto.ordenha):

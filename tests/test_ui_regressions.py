@@ -109,6 +109,7 @@ def test_formulario_de_parto_oferece_fallback_para_gemeos_e_cadastra_duas_crias(
 
     assert resposta.status_code == 302
     parto = Parto.objects.get(cobertura=cobertura)
+    assert resposta.url == url
     assert parto.quantidade_bezerros == 2
     assert Animal.objects.filter(mae=vaca, pai=touro, nascimento__parto=parto).count() == 2
 

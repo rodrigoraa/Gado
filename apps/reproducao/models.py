@@ -142,10 +142,17 @@ class Cobertura(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
                 erros["vaca"] = _("A cobertura só pode ser registrada para uma fêmea.")
             elif not self.vaca.esta_ativo:
                 erros["vaca"] = _("A cobertura só pode ser registrada para uma fêmea ativa.")
+            elif self.data and self.vaca.eh_bezerro_em(self.data):
+                erros["vaca"] = _("Uma bezerra ainda não pode receber cobertura.")
             if self.data and self.vaca.data_nascimento and self.data < self.vaca.data_nascimento:
                 erros["data"] = _("A cobertura não pode anteceder o nascimento da vaca.")
-        if self.touro_id and self.touro.sexo != Animal.Sexo.MACHO:
-            erros["touro"] = _("O reprodutor deve ser um macho.")
+        if self.touro_id:
+            if self.touro.sexo != Animal.Sexo.MACHO:
+                erros["touro"] = _("O reprodutor deve ser um macho.")
+            elif not self.touro.esta_ativo:
+                erros["touro"] = _("O reprodutor deve estar ativo.")
+            elif self.data and self.touro.eh_bezerro_em(self.data):
+                erros["touro"] = _("Um bezerro macho ainda não pode ser usado em coberturas.")
         if self.data and self.data > hoje:
             erros["data"] = _("A data da cobertura não pode ser futura.")
         if self.situacao == self.Situacao.CANCELADA and not self.motivo_cancelamento.strip():

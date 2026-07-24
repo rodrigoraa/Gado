@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.models import ArquivoAnexo
-from apps.rebanho.forms import AnimalForm, CadastroBezerroForm
+from apps.rebanho.forms import AnimalForm, CadastroBezerroForm, CadastroNovilhaForm
 from apps.rebanho.models import Animal, Lote
 from apps.rebanho.selectors import linha_do_tempo
 from apps.rebanho.services import (
@@ -336,6 +336,7 @@ def test_cadastro_minimo_exige_apenas_nome(client, django_user_model) -> None:  
 
     assert resposta.status_code == 302
     cadastrado = Animal.objects.get(nome="Estrela")
+    assert resposta.url == reverse("rebanho:animal_novo")
     assert cadastrado.cor == ""
     assert cadastrado.sexo == ""
     assert not cadastrado.foto
@@ -359,10 +360,50 @@ def test_cadastro_rapido_de_bezerro_define_nascimento_como_hoje(client, django_u
 
     assert resposta.status_code == 302
     bezerro = Animal.objects.get(nome="Pingo")
+    assert resposta.url == reverse("rebanho:bezerro_novo")
     assert bezerro.data_nascimento == timezone.localdate()
     assert bezerro.data_entrada == timezone.localdate()
     assert bezerro.mae == mae
     assert bezerro.categoria == "Bezerro"
+
+
+def test_cadastro_de_novilha_define_femea_e_permanece_no_formulario(
+    client, django_user_model
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(username="cadastro-novilha", password="teste")
+    client.force_login(usuario)
+    nascimento = timezone.localdate() - timedelta(days=365 * 2)
+
+    resposta = client.post(
+        reverse("rebanho:novilha_nova"),
+        {
+            "nome": "Jade",
+            "cor": "Parda",
+            "sexo": Animal.Sexo.MACHO,
+            "data_nascimento": nascimento.strftime("%d/%m/%Y"),
+        },
+    )
+
+    novilha = Animal.objects.get(nome="Jade")
+    assert resposta.status_code == 302
+    assert resposta.url == reverse("rebanho:novilha_nova")
+    assert novilha.sexo == Animal.Sexo.FEMEA
+    assert novilha.data_nascimento == nascimento
+    assert novilha.categoria == "Novilha"
+
+
+def test_formulario_de_novilha_rejeita_idade_de_bezerra() -> None:
+    formulario = CadastroNovilhaForm(
+        data={
+            "nome": "Muito nova",
+            "cor": "",
+            "sexo": Animal.Sexo.FEMEA,
+            "data_nascimento": timezone.localdate().strftime("%d/%m/%Y"),
+        }
+    )
+
+    assert not formulario.is_valid()
+    assert "data_nascimento" in formulario.errors
 
 
 def test_lista_autenticada_renderiza_e_htmx_retorna_somente_cartoes(

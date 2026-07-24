@@ -123,7 +123,7 @@ class CoberturaCreateView(LoginRequiredMixin, View):
         form = CoberturaForm(request.POST)
         if form.is_valid():
             try:
-                cobertura = registrar_cobertura(
+                registrar_cobertura(
                     vaca=form.cleaned_data["vaca"],
                     touro=form.cleaned_data["touro"],
                     data_cobertura=form.cleaned_data["data"],
@@ -135,7 +135,7 @@ class CoberturaCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Cobertura registrada com previsão calculada.")
-                return redirect("reproducao:cobertura_detalhe", cobertura_id=cobertura.pk)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -229,7 +229,7 @@ class DiagnosticoCreateView(LoginRequiredMixin, View):
         form = DiagnosticoGestacaoForm(request.POST, cobertura=cobertura_url)
         if form.is_valid():
             try:
-                diagnostico = registrar_diagnostico(
+                registrar_diagnostico(
                     cobertura=form.cleaned_data["cobertura"],
                     data_diagnostico=form.cleaned_data["data"],
                     resultado=form.cleaned_data["resultado"],
@@ -245,9 +245,7 @@ class DiagnosticoCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Diagnóstico registrado e situação atualizada.")
-                return redirect(
-                    "reproducao:cobertura_detalhe", cobertura_id=diagnostico.cobertura_id
-                )
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -277,7 +275,7 @@ class PerdaCreateView(LoginRequiredMixin, View):
         form = PerdaGestacionalForm(request.POST, cobertura=cobertura_url)
         if form.is_valid():
             try:
-                perda = registrar_perda_gestacional(
+                registrar_perda_gestacional(
                     cobertura=form.cleaned_data["cobertura"],
                     data_perda=form.cleaned_data["data"],
                     tipo=form.cleaned_data["tipo"],
@@ -288,7 +286,7 @@ class PerdaCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Ocorrência gestacional registrada.")
-                return redirect("reproducao:cobertura_detalhe", cobertura_id=perda.cobertura_id)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
@@ -349,7 +347,7 @@ class PartoCreateView(LoginRequiredMixin, View):
             for dados in bezerros:
                 dados.pop("DELETE", None)
             try:
-                parto = registrar_parto(
+                registrar_parto(
                     vaca=form.cleaned_data["vaca"],
                     cobertura=form.cleaned_data["cobertura"],
                     data_hora=form.cleaned_data["data_hora"],
@@ -364,7 +362,7 @@ class PartoCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Parto e nascimentos registrados em conjunto.")
-                return redirect("reproducao:parto_detalhe", parto_id=parto.pk)
+                return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,

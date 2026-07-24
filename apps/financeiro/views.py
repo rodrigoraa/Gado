@@ -201,7 +201,7 @@ class CadastroFormView(LoginRequiredMixin, View):
                 _adicionar_erros(form, erro)
             else:
                 messages.success(request, self.mensagem_sucesso)
-                return redirect(self.sucesso_url)
+                return redirect(request.get_full_path())
         return render(
             request, self.template_name, {"form": form, "titulo": self.titulo}, status=422
         )

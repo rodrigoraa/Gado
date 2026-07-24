@@ -101,3 +101,30 @@ def test_rotas_de_saude_exigem_login(client) -> None:  # type: ignore[no-untyped
     resposta = client.get(reverse("saude:tratamentos"))
     assert resposta.status_code == 302
     assert "/entrar/" in resposta.url
+
+
+def test_cadastro_de_produto_permanece_no_formulario(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="produto-redirect",
+        password="teste",
+    )
+    client.force_login(usuario)
+    url = reverse("saude:produto_novo")
+
+    resposta = client.post(
+        url,
+        {
+            "nome": "Produto contínuo",
+            "tipo": ProdutoSaude.Tipo.MEDICAMENTO,
+            "fabricante": "",
+            "unidade": "mL",
+            "carencia_padrao_dias": "0",
+            "carencia_padrao_horas": "0",
+            "observacoes": "",
+            "ativo": "on",
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == url
+    assert ProdutoSaude.objects.filter(nome="Produto contínuo").exists()

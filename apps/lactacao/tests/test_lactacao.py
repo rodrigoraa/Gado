@@ -164,3 +164,29 @@ def test_telas_de_lactacao_renderizam_autenticadas(client, django_user_model, va
         client.get(reverse("lactacao:detalhe", kwargs={"lactacao_id": lactacao.pk})).status_code
         == 200
     )
+
+
+def test_cadastro_de_lactacao_permanece_no_formulario(
+    client, django_user_model, vaca: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="lactacao-redirect",
+        password="teste",
+    )
+    client.force_login(usuario)
+    parto = criar_parto(vaca, dias_atras=2)
+    url = reverse("lactacao:nova")
+
+    resposta = client.post(
+        url,
+        {
+            "vaca": str(vaca.pk),
+            "parto": str(parto.pk),
+            "data_inicio": (timezone.localdate() - timedelta(days=2)).strftime("%d/%m/%Y"),
+            "observacoes": "",
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == url
+    assert Lactacao.objects.filter(vaca=vaca, parto=parto).exists()
