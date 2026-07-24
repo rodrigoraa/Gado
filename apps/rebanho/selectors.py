@@ -14,6 +14,7 @@ def listar_animais(
     busca: str = "",
     situacao: str = "",
     sexo: str = "",
+    tipo_animal: str = "",
     lote_id: str = "",
 ) -> QuerySet[Animal]:
     from apps.reproducao.models import Cobertura
@@ -36,6 +37,8 @@ def listar_animais(
         queryset = queryset.filter(situacao=situacao)
     if sexo in Animal.Sexo.values:
         queryset = queryset.filter(sexo=sexo)
+    if tipo_animal in Animal.TipoAnimal.values:
+        queryset = queryset.filter(tipo_animal=tipo_animal)
     if lote_id:
         queryset = queryset.filter(lote_id=lote_id)
     return queryset.order_by("identificacao", "identificacao_provisoria", "nome")

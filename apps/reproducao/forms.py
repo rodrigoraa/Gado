@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.rebanho.forms import BootstrapFormMixin
 from apps.rebanho.models import Animal
 
-from .models import Cobertura, DiagnosticoGestacao, Parto, PerdaGestacional
+from .models import Cobertura, DiagnosticoGestacao, Nascimento, Parto, PerdaGestacional
 
 
 class CoberturaForm(BootstrapFormMixin, forms.ModelForm):
@@ -129,7 +129,8 @@ class PartoForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["data_hora"].input_formats = ["%Y-%m-%dT%H:%M"]
         self.fields["vaca"].queryset = Animal.objects.filter(
-            sexo=Animal.Sexo.FEMEA, situacao=Animal.Situacao.ATIVO
+            sexo=Animal.Sexo.FEMEA,
+            situacao=Animal.Situacao.ATIVO,
         )
         self.fields["cobertura"].queryset = Cobertura.objects.filter(
             situacao__in=Cobertura.SITUACOES_ABERTAS
@@ -159,6 +160,14 @@ class BezerroForm(BootstrapFormMixin, forms.Form):
         choices=(("", _("Não informado")), *Animal.Sexo.choices),
         required=False,
     )
+    situacao = forms.ChoiceField(
+        label=_("Situação ao nascer"),
+        choices=Nascimento.Situacao.choices,
+        required=False,
+    )
+
+    def clean_situacao(self) -> str:
+        return self.cleaned_data.get("situacao") or Nascimento.Situacao.VIVO
 
 
 BezerroFormSet = forms.formset_factory(

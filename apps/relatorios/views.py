@@ -138,18 +138,15 @@ def rebanho(request: HttpRequest) -> HttpResponse:
 
     categorias = {
         "BEZERRO": "Bezerro",
-        "BEZERRA": "Bezerra",
         "NOVILHA": "Novilha",
         "VACA": "Vaca",
-        "TOURO": "Touro",
         "BOI": "Boi",
-        "INATIVO": "Animal inativo",
     }
     if categoria not in categorias:
         categoria = ""
-    objetos = list(animais)
     if categoria:
-        objetos = [animal for animal in objetos if str(animal.categoria) == categorias[categoria]]
+        animais = animais.filter(tipo_animal=categoria)
+    objetos = list(animais)
 
     linhas: list[Sequence[object]] = []
     for animal in objetos:
@@ -178,7 +175,7 @@ def rebanho(request: HttpRequest) -> HttpResponse:
                 "Identificação",
                 "Nome",
                 "Sexo",
-                "Categoria",
+                "Tipo de animal",
                 "Nascimento",
                 "Idade",
                 "Mãe",
@@ -196,7 +193,7 @@ def rebanho(request: HttpRequest) -> HttpResponse:
     filtros = [
         _filtro_select("sexo", "Sexo", Animal.Sexo.choices, sexo),
         _filtro_select("situacao", "Situação", Animal.Situacao.choices, situacao),
-        _filtro_select("categoria", "Categoria", tuple(categorias.items()), categoria),
+        _filtro_select("categoria", "Tipo de animal", tuple(categorias.items()), categoria),
     ]
     return _responder(
         request,

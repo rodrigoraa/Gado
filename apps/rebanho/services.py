@@ -41,6 +41,27 @@ def _como_data(valor: date | datetime | None) -> date | None:
     return valor
 
 
+def _inferir_tipo_animal(dados: dict[str, Any]) -> str:
+    nascimento = _como_data(dados.get("data_nascimento"))
+    if isinstance(nascimento, str):
+        try:
+            nascimento = date.fromisoformat(nascimento)
+        except ValueError:
+            nascimento = None
+    if nascimento:
+        hoje = timezone.localdate()
+        meses = (hoje.year - nascimento.year) * 12 + hoje.month - nascimento.month
+        if hoje.day < nascimento.day:
+            meses -= 1
+        if meses < 12:
+            return Animal.TipoAnimal.BEZERRO
+    if dados.get("sexo") == Animal.Sexo.MACHO:
+        return Animal.TipoAnimal.BOI
+    if dados.get("sexo") == Animal.Sexo.FEMEA:
+        return Animal.TipoAnimal.NOVILHA
+    return Animal.TipoAnimal.BEZERRO
+
+
 def _primeira_data_dependente(animal: Animal) -> date | None:
     """Obtém o primeiro evento que passaria a anteceder um nascimento corrigido."""
 
@@ -140,6 +161,7 @@ def salvar_animal(
         dados["foto"] = None
     dados_upload_foto = capturar_dados_upload(dados.get("foto")) if foto_informada else None
     if animal is None:
+        dados.setdefault("tipo_animal", _inferir_tipo_animal(dados))
         animal = Animal(**dados)
         _validar_salvar(animal)
         if dados_upload_foto:

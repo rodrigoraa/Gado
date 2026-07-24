@@ -70,6 +70,7 @@ class AnimalListView(LoginRequiredMixin, ListView):
         return listar_animais(
             busca=self.request.GET.get("q", ""),
             sexo=self.request.GET.get("sexo", ""),
+            tipo_animal=self.request.GET.get("tipo_animal", ""),
         )
 
     def get_context_data(self, **kwargs):  # type: ignore[no-untyped-def]
@@ -134,7 +135,7 @@ class AnimalFormView(LoginRequiredMixin, View):
         elif self.bezerro:
             titulo = "Cadastrar bezerro"
             descricao = (
-                "Informe o nome. Cor, foto, sexo e mãe são opcionais. "
+                "Informe nome e sexo. Cor e mãe são opcionais. "
                 "O nascimento será registrado como hoje."
             )
         elif self.novilha:
@@ -145,7 +146,7 @@ class AnimalFormView(LoginRequiredMixin, View):
             )
         else:
             titulo = "Cadastrar animal"
-            descricao = "Somente o nome é obrigatório. Cor, foto e sexo são opcionais."
+            descricao = "Informe nome, sexo e tipo de animal. A cor é opcional."
         return {
             "form": form,
             "animal": self.animal,

@@ -76,6 +76,12 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
         MACHO = "M", _("Macho")
         FEMEA = "F", _("Fêmea")
 
+    class TipoAnimal(models.TextChoices):
+        VACA = "VACA", _("Vaca")
+        NOVILHA = "NOVILHA", _("Novilha")
+        BEZERRO = "BEZERRO", _("Bezerro")
+        BOI = "BOI", _("Boi")
+
     class Origem(models.TextChoices):
         NASCIDO_SITIO = "NASCIDO_SITIO", _("Nascido no sítio")
         COMPRADO = "COMPRADO", _("Comprado")
@@ -102,6 +108,12 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
     nome = models.CharField(_("nome"), max_length=100, blank=True)
     cor = models.CharField(_("cor"), max_length=80, blank=True)
     sexo = models.CharField(_("sexo"), max_length=1, choices=Sexo.choices, blank=True, default="")
+    tipo_animal = models.CharField(
+        _("tipo de animal"),
+        max_length=10,
+        choices=TipoAnimal.choices,
+        default=TipoAnimal.BEZERRO,
+    )
     data_nascimento = models.DateField(_("data de nascimento"), null=True, blank=True)
     data_nascimento_aproximada = models.BooleanField(
         _("data de nascimento aproximada"), default=False
@@ -253,29 +265,7 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
 
     @property
     def categoria(self) -> str:
-        if not self.esta_ativo:
-            return _("Animal inativo")
-
-        idade_em_meses = self.idade_em_meses
-        if idade_em_meses is None:
-            return _("Animal")
-        if self.eh_bezerro:
-            if self.sexo == self.Sexo.FEMEA:
-                return _("Bezerra")
-            return _("Bezerro")
-
-        if self.sexo == self.Sexo.MACHO:
-            if self.filhos_como_pai.exists():
-                return _("Touro")
-            return _("Boi")
-        if self.sexo != self.Sexo.FEMEA:
-            return _("Animal")
-
-        try:
-            tem_parto = self.partos.exclude(situacao="CANCELADO").exists()
-        except (AttributeError, ValueError):
-            tem_parto = False
-        return _("Vaca") if tem_parto else _("Novilha")
+        return self.get_tipo_animal_display()
 
     @property
     def filhos(self):  # type: ignore[no-untyped-def]
@@ -326,6 +316,11 @@ class Animal(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
             erros["data_saida"] = _("A data de saída não pode ser futura.")
         if self.situacao != self.Situacao.ATIVO and not self.motivo_saida:
             erros["motivo_saida"] = _("Informe o motivo ao marcar o animal como inativo.")
+        if self.tipo_animal in {self.TipoAnimal.VACA, self.TipoAnimal.NOVILHA}:
+            if self.sexo != self.Sexo.FEMEA:
+                erros["tipo_animal"] = _("Vaca e novilha devem ter sexo fêmea.")
+        elif self.tipo_animal == self.TipoAnimal.BOI and self.sexo != self.Sexo.MACHO:
+            erros["tipo_animal"] = _("Boi deve ter sexo macho.")
 
         if self.mae_id:
             if self.mae_id == self.pk:

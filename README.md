@@ -596,7 +596,7 @@ de tentar reverter migrations manualmente sem um plano testado.
 
 - A identificação do animal é única; mãe é fêmea, pai é macho e ciclos de
   parentesco são bloqueados.
-- Idade e categoria são calculadas, não armazenadas como idade fixa.
+- A idade é calculada; o tipo de animal (vaca, novilha, bezerro ou boi) é informado no cadastro.
 - Coberturas e previsões originais permanecem no histórico; cancelamentos e
   correções relevantes exigem justificativa.
 - Parto, bezerros, parentesco, cobertura e histórico são gravados em transação.

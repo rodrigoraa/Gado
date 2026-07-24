@@ -4,6 +4,17 @@
 {% block content %}
 <section class="page-actions">
   <a class="btn-app btn-ghost" href="{% url 'reproducao:coberturas' %}">Voltar</a>
+  <div class="btn-group">
+    {% if parto_ativo %}
+      <a class="btn-app btn-primary-app" href="{% url 'reproducao:parto_detalhe' parto_ativo.pk %}">Ver nascimento</a>
+    {% elif cobertura.esta_aberta %}
+      <a class="btn-app btn-primary-app" href="{% url 'reproducao:cobertura_parto' cobertura.pk %}">Registrar nascimento</a>
+    {% endif %}
+    {% if cobertura.situacao != 'FINALIZADA_COM_PARTO' and cobertura.situacao != 'CANCELADA' %}
+      <a class="btn-app btn-danger-app" href="{% url 'reproducao:cobertura_cancelar' cobertura.pk %}">Cancelar</a>
+      <a class="btn-app btn-ghost" href="{% url 'reproducao:cobertura_alterar_data' cobertura.pk %}">Editar data</a>
+    {% endif %}
+  </div>
 </section>
 <section class="card-grid">
   <article class="surface-card">
@@ -12,6 +23,7 @@
       <dt>Vaca</dt><dd><a href="{% url 'rebanho:animal_detalhe' cobertura.vaca.pk %}">{{ cobertura.vaca }}</a></dd>
       <dt>Boi</dt><dd>{% if cobertura.touro %}<a href="{% url 'rebanho:animal_detalhe' cobertura.touro.pk %}">{{ cobertura.touro }}</a>{% else %}Não informado{% endif %}</dd>
       <dt>Data da cobertura</dt><dd>{{ cobertura.data|date:"d/m/Y" }}</dd>
+      <dt>Situação</dt><dd>{{ cobertura.get_situacao_display }}</dd>
     </dl>
   </article>
   <article class="surface-card">
@@ -20,4 +32,28 @@
     <p class="lead-copy">Data aproximada calculada automaticamente.</p>
   </article>
 </section>
+{% if parto_ativo %}
+  <section class="surface-card">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Nascimento confirmado</p>
+        <h2>{{ parto_ativo.data_hora|date:"d/m/Y H:i" }}</h2>
+        <p>{{ parto_ativo.get_resultado_display }} · {{ parto_ativo.quantidade_bezerros }} bezerro{{ parto_ativo.quantidade_bezerros|pluralize }}</p>
+      </div>
+      <a class="btn-app btn-ghost" href="{% url 'reproducao:parto_detalhe' parto_ativo.pk %}">Ver parto</a>
+    </div>
+    <div class="card-grid">
+      {% for nascimento in parto_ativo.nascimentos.all %}
+        <article class="list-card">
+          <div>
+            <strong><a href="{% url 'rebanho:animal_detalhe' nascimento.animal.pk %}">{{ nascimento.animal }}</a></strong>
+            <p>{{ nascimento.get_situacao_display }}{% if nascimento.animal.get_sexo_display %} · {{ nascimento.animal.get_sexo_display }}{% endif %}</p>
+          </div>
+        </article>
+      {% empty %}
+        <p>Nenhum bezerro associado a este parto.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
 {% endblock %}

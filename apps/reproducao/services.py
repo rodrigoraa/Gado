@@ -351,6 +351,7 @@ def registrar_parto(
             nome=dados.get("nome", ""),
             cor=dados.get("cor", ""),
             sexo=dados.get("sexo", ""),
+            tipo_animal=Animal.TipoAnimal.BEZERRO,
             data_nascimento=data_nascimento,
             data_nascimento_aproximada=False,
             raca=dados.get("raca"),

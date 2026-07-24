@@ -3,7 +3,7 @@
 {% block page_title %}Rebanho{% endblock %}
 {% block content %}
 <section class="page-actions">
-  <p class="lead-copy">Todo o seu gado em uma lista, com a foto de cada animal quando disponível.</p>
+  <p class="lead-copy">Todo o seu gado em uma lista, organizado por sexo e tipo de animal.</p>
   <div class="btn-group">
     <a class="btn-app btn-ghost" href="{% url 'rebanho:bezerro_novo' %}">Cadastrar bezerro</a>
     <a class="btn-app btn-ghost" href="{% url 'rebanho:novilha_nova' %}">Cadastrar novilha</a>
@@ -17,7 +17,15 @@
   <article class="metric-card"><span>Machos</span><strong>{{ resumo.machos_ativos }}</strong></article>
 </section>
 
+<nav class="surface-card filter-bar" aria-label="Filtrar por tipo de animal">
+  <a class="btn-app {% if filtros.tipo_animal == 'VACA' %}btn-primary-app{% else %}btn-ghost{% endif %}" href="{% url 'rebanho:animais' %}?tipo_animal=VACA" aria-pressed="{% if filtros.tipo_animal == 'VACA' %}true{% else %}false{% endif %}">Vacas</a>
+  <a class="btn-app {% if filtros.tipo_animal == 'BEZERRO' %}btn-primary-app{% else %}btn-ghost{% endif %}" href="{% url 'rebanho:animais' %}?tipo_animal=BEZERRO" aria-pressed="{% if filtros.tipo_animal == 'BEZERRO' %}true{% else %}false{% endif %}">Bezerros</a>
+  <a class="btn-app {% if filtros.tipo_animal == 'NOVILHA' %}btn-primary-app{% else %}btn-ghost{% endif %}" href="{% url 'rebanho:animais' %}?tipo_animal=NOVILHA" aria-pressed="{% if filtros.tipo_animal == 'NOVILHA' %}true{% else %}false{% endif %}">Novilhas</a>
+  <a class="btn-app {% if filtros.tipo_animal == 'BOI' %}btn-primary-app{% else %}btn-ghost{% endif %}" href="{% url 'rebanho:animais' %}?tipo_animal=BOI" aria-pressed="{% if filtros.tipo_animal == 'BOI' %}true{% else %}false{% endif %}">Bois</a>
+</nav>
+
 <form class="surface-card filter-bar" method="get" role="search" hx-get="{% url 'rebanho:animais' %}" hx-target="#animal-results" hx-push-url="true" hx-trigger="submit, input changed delay:400ms from:#q, change from:select">
+  {% if filtros.tipo_animal %}<input type="hidden" name="tipo_animal" value="{{ filtros.tipo_animal }}">{% endif %}
   <div class="form-grid">
     <div class="field-wrap"><label for="q">Nome</label><input class="form-control" id="q" name="q" value="{{ filtros.q }}"></div>
     <div class="field-wrap"><label for="sexo">Sexo</label><select class="form-select" id="sexo" name="sexo"><option value="">Todos</option>{% for valor, rotulo in sexos %}<option value="{{ valor }}" {% if filtros.sexo == valor %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>

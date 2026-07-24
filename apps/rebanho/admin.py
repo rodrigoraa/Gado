@@ -64,15 +64,15 @@ class AnimalAdmin(SemExclusaoAdminMixin, admin.ModelAdmin):
         "identificador_exibicao",
         "cor",
         "sexo",
-        "categoria",
+        "tipo_animal",
         "situacao",
         "lote",
         "peso_atual",
     )
-    list_filter = ("situacao", "sexo", "origem", "raca", "lote")
+    list_filter = ("situacao", "sexo", "tipo_animal", "origem", "raca", "lote")
     search_fields = ("identificacao", "identificacao_provisoria", "nome")
     autocomplete_fields = ("mae", "pai", "raca", "lote")
-    readonly_fields = ("id", "idade", "categoria", "criado_em", "atualizado_em")
+    readonly_fields = ("id", "idade", "criado_em", "atualizado_em")
     date_hierarchy = "data_nascimento"
     inlines = (PesagemInline, MovimentacaoLoteInline, HistoricoParentescoInline)
     fieldsets = (
@@ -94,10 +94,10 @@ class AnimalAdmin(SemExclusaoAdminMixin, admin.ModelAdmin):
             {
                 "fields": (
                     "sexo",
+                    "tipo_animal",
                     "data_nascimento",
                     "data_nascimento_aproximada",
                     "idade",
-                    "categoria",
                     "raca",
                     "mae",
                     "pai",

@@ -96,6 +96,18 @@ class CoberturaDetailView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):  # type: ignore[no-untyped-def]
         return obter_cobertura(cobertura_id=str(self.kwargs["cobertura_id"]))
 
+    def get_context_data(self, **kwargs):  # type: ignore[no-untyped-def]
+        contexto = super().get_context_data(**kwargs)
+        contexto["parto_ativo"] = next(
+            (
+                parto
+                for parto in self.object.partos.all()
+                if parto.situacao != Parto.Situacao.CANCELADO
+            ),
+            None,
+        )
+        return contexto
+
 
 class CoberturaCreateView(LoginRequiredMixin, View):
     template_name = "reproducao/form.html"
@@ -319,6 +331,14 @@ class PartoCreateView(LoginRequiredMixin, View):
     def _cobertura(self, cobertura_id: str | None) -> Cobertura | None:
         return get_object_or_404(Cobertura, pk=cobertura_id) if cobertura_id else None
 
+    def _contexto(self, *, form, formset, cobertura: Cobertura | None):  # type: ignore[no-untyped-def]
+        return {
+            "form": form,
+            "formset": formset,
+            "cobertura_origem": cobertura,
+            "titulo": "Confirmar nascimento" if cobertura else "Registrar parto",
+        }
+
     def get(self, request: HttpRequest, cobertura_id: str | None = None) -> HttpResponse:
         cobertura = self._cobertura(cobertura_id)
         form = PartoForm(
@@ -329,7 +349,7 @@ class PartoCreateView(LoginRequiredMixin, View):
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "titulo": "Registrar parto"},
+            self._contexto(form=form, formset=formset, cobertura=cobertura),
         )
 
     def post(self, request: HttpRequest, cobertura_id: str | None = None) -> HttpResponse:
@@ -347,7 +367,7 @@ class PartoCreateView(LoginRequiredMixin, View):
             for dados in bezerros:
                 dados.pop("DELETE", None)
             try:
-                registrar_parto(
+                parto = registrar_parto(
                     vaca=form.cleaned_data["vaca"],
                     cobertura=form.cleaned_data["cobertura"],
                     data_hora=form.cleaned_data["data_hora"],
@@ -362,11 +382,13 @@ class PartoCreateView(LoginRequiredMixin, View):
                 _erros_servico(form, erro)
             else:
                 messages.success(request, "Parto e nascimentos registrados em conjunto.")
+                if cobertura_url:
+                    return redirect("reproducao:parto_detalhe", parto_id=parto.pk)
                 return redirect(request.get_full_path())
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "titulo": "Registrar parto"},
+            self._contexto(form=form, formset=formset, cobertura=cobertura_url),
             status=422,
         )
 

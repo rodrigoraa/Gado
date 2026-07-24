@@ -384,6 +384,151 @@ def test_lista_de_coberturas_tem_resposta_parcial_htmx(
     assert "<!doctype html>" not in conteudo.lower()
 
 
+def test_cobertura_expoe_acoes_de_editar_e_cancelar(
+    client, django_user_model, vaca: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="acoes-cobertura", password="teste"
+    )
+    client.force_login(usuario)
+    cobertura = criar_cobertura(vaca)
+    url_editar = reverse(
+        "reproducao:cobertura_alterar_data",
+        kwargs={"cobertura_id": cobertura.pk},
+    )
+    url_cancelar = reverse(
+        "reproducao:cobertura_cancelar",
+        kwargs={"cobertura_id": cobertura.pk},
+    )
+
+    detalhe = client.get(
+        reverse(
+            "reproducao:cobertura_detalhe",
+            kwargs={"cobertura_id": cobertura.pk},
+        )
+    )
+    lista = client.get(reverse("reproducao:coberturas"))
+
+    assert detalhe.status_code == 200
+    assert url_editar in detalhe.content.decode()
+    assert url_cancelar in detalhe.content.decode()
+    assert url_editar in lista.content.decode()
+    assert url_cancelar in lista.content.decode()
+
+
+def test_acoes_da_cobertura_corrigem_data_e_cancelam(
+    client, django_user_model, vaca: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="alterar-cobertura", password="teste"
+    )
+    client.force_login(usuario)
+    cobertura = criar_cobertura(vaca)
+    nova_data = cobertura.data + timedelta(days=1)
+
+    resposta_edicao = client.post(
+        reverse(
+            "reproducao:cobertura_alterar_data",
+            kwargs={"cobertura_id": cobertura.pk},
+        ),
+        {
+            "nova_data": nova_data.isoformat(),
+            "justificativa": "Correção solicitada pelo usuário.",
+        },
+    )
+    cobertura.refresh_from_db()
+
+    assert resposta_edicao.status_code == 302
+    assert cobertura.data == nova_data
+
+    resposta_cancelamento = client.post(
+        reverse(
+            "reproducao:cobertura_cancelar",
+            kwargs={"cobertura_id": cobertura.pk},
+        ),
+        {"justificativa": "Registro lançado por engano."},
+    )
+    cobertura.refresh_from_db()
+
+    assert resposta_cancelamento.status_code == 302
+    assert cobertura.situacao == Cobertura.Situacao.CANCELADA
+
+
+def test_fluxo_da_cobertura_confirma_nascimento_e_exibe_bezerro(
+    client, django_user_model, vaca: Animal, touro: Animal
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="nascimento-cobertura", password="teste"
+    )
+    client.force_login(usuario)
+    cobertura = criar_cobertura(vaca, touro)
+    url_cobertura = reverse(
+        "reproducao:cobertura_detalhe",
+        kwargs={"cobertura_id": cobertura.pk},
+    )
+    url_nascimento = reverse(
+        "reproducao:cobertura_parto",
+        kwargs={"cobertura_id": cobertura.pk},
+    )
+
+    detalhe_inicial = client.get(url_cobertura)
+    formulario = client.get(url_nascimento)
+
+    assert detalhe_inicial.status_code == 200
+    assert url_nascimento in detalhe_inicial.content.decode()
+    assert formulario.status_code == 200
+    assert formulario.context["cobertura_origem"] == cobertura
+    assert formulario.context["titulo"] == "Confirmar nascimento"
+    assert "bezerros-0-situacao" in formulario.content.decode()
+    assert url_cobertura in formulario.content.decode()
+
+    momento_parto = timezone.localtime() - timedelta(minutes=1)
+    resposta = client.post(
+        url_nascimento,
+        {
+            "vaca": str(vaca.pk),
+            "cobertura": str(cobertura.pk),
+            "data_hora": momento_parto.strftime("%Y-%m-%dT%H:%M"),
+            "resultado": Parto.Resultado.NORMAL,
+            "responsavel": "Operador",
+            "observacoes": "Nascimento confirmado pela cobertura.",
+            "bezerros-TOTAL_FORMS": "1",
+            "bezerros-INITIAL_FORMS": "0",
+            "bezerros-MIN_NUM_FORMS": "0",
+            "bezerros-MAX_NUM_FORMS": "5",
+            "bezerros-0-nome": "Estrela",
+            "bezerros-0-sexo": Animal.Sexo.FEMEA,
+            "bezerros-0-situacao": Nascimento.Situacao.VIVO,
+        },
+    )
+
+    parto = Parto.objects.get(cobertura=cobertura)
+    nascimento = parto.nascimentos.select_related("animal").get()
+    cobertura.refresh_from_db()
+    url_parto = reverse(
+        "reproducao:parto_detalhe",
+        kwargs={"parto_id": parto.pk},
+    )
+
+    assert resposta.status_code == 302
+    assert resposta.url == url_parto
+    assert cobertura.situacao == Cobertura.Situacao.FINALIZADA_COM_PARTO
+    assert nascimento.animal.nome == "Estrela"
+    assert nascimento.animal.mae == vaca
+    assert nascimento.animal.pai == touro
+    assert nascimento.situacao == Nascimento.Situacao.VIVO
+
+    detalhe_final = client.get(url_cobertura)
+    conteudo_final = detalhe_final.content.decode()
+    detalhe_parto = client.get(url_parto)
+
+    assert "Nascimento confirmado" in conteudo_final
+    assert "Estrela" in conteudo_final
+    assert url_parto in conteudo_final
+    assert url_nascimento not in conteudo_final
+    assert url_cobertura in detalhe_parto.content.decode()
+
+
 def test_lista_coberturas_por_boi_mostra_vaca_data_e_foto(
     client, django_user_model, vaca: Animal, touro: Animal
 ) -> None:  # type: ignore[no-untyped-def]

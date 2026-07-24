@@ -18,6 +18,7 @@
       <dt>Nome</dt><dd>{{ animal.nome }}</dd>
       <dt>Cor</dt><dd>{{ animal.cor|default:"Não informada" }}</dd>
       <dt>Sexo</dt><dd>{{ animal.get_sexo_display|default:"Não informado" }}</dd>
+      <dt>Tipo de animal</dt><dd>{{ animal.get_tipo_animal_display }}</dd>
       <dt>Mãe</dt><dd>{% if animal.mae %}<a href="{% url 'rebanho:animal_detalhe' animal.mae.pk %}">{{ animal.mae }}</a>{% else %}Não informada{% endif %}</dd>
       <dt>Nascimento</dt><dd>{{ animal.data_nascimento|date:"d/m/Y"|default:"Não informado" }}</dd>
     </dl>

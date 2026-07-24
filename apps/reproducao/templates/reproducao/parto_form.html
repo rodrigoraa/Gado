@@ -2,11 +2,18 @@
 {% block title %}{{ titulo }} — Gestão Rural{% endblock %}
 {% block page_title %}{{ titulo }}{% endblock %}
 {% block content %}
+{% if cobertura_origem %}
+  <section class="surface-card form-card">
+    <p class="eyebrow">Cobertura selecionada</p>
+    <h2>{{ cobertura_origem.vaca }}</h2>
+    <p>Cobertura de {{ cobertura_origem.data|date:"d/m/Y" }}{% if cobertura_origem.touro %}, com {{ cobertura_origem.touro }}{% endif %}. Ao salvar, a cobertura será finalizada e os bezerros serão vinculados automaticamente.</p>
+  </section>
+{% endif %}
 <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
   <section class="surface-card form-card"><h2>Dados do parto</h2>{% include "shared/form_fields.html" with form=form %}</section>
   <section class="surface-card form-card" data-bezerro-formset data-max-forms="5">
     <div class="section-heading">
-      <div><h2>Bezerros</h2><p>Informe o nome de cada cria. Cor, foto e sexo são opcionais; mãe e data de nascimento vêm deste parto.</p></div>
+      <div><h2>Bezerros</h2><p>Informe cada cria nascida. A mãe, o pai conhecido e a data de nascimento vêm deste parto.</p></div>
       <button class="btn-app btn-ghost" id="adicionar-bezerro" type="button">Adicionar bezerro</button>
     </div>
     {{ formset.management_form }}
@@ -27,7 +34,7 @@
     </template>
     <p class="text-muted" id="limite-bezerros" hidden>O limite é de cinco bezerros por parto.</p>
   </section>
-  <div class="form-actions"><a class="btn-app btn-ghost" href="{% url 'reproducao:partos' %}">Voltar</a><button class="btn-app btn-primary-app" type="submit">Registrar tudo</button></div>
+  <div class="form-actions"><a class="btn-app btn-ghost" href="{% if cobertura_origem %}{% url 'reproducao:cobertura_detalhe' cobertura_origem.pk %}{% else %}{% url 'reproducao:partos' %}{% endif %}">Voltar</a><button class="btn-app btn-primary-app" type="submit">Confirmar nascimento</button></div>
 </form>
 {% endblock %}
 
