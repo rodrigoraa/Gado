@@ -56,8 +56,11 @@ def test_dashboard_exibe_somente_as_acoes_essenciais(client, django_user_model):
         "Leite neste mês",
     ):
         assert texto in conteudo
+    acoes_principais = conteudo.split(
+        '<section class="quick-actions essential-actions"', maxsplit=1
+    )[1].split("</section>", maxsplit=1)[0]
     for texto in ("Diagnóstico", "Destino", "Financeiro", "Medicamento", "Pesagem"):
-        assert texto not in conteudo
+        assert texto not in acoes_principais
 
 
 @pytest.mark.django_db

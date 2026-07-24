@@ -18,6 +18,30 @@
         toast.remove();
       });
     }, 6500);
+
+    var menus = document.querySelectorAll(".user-menu, .mobile-more");
+
+    document.addEventListener("click", function (event) {
+      menus.forEach(function (menu) {
+        if (menu.open && !menu.contains(event.target)) {
+          menu.removeAttribute("open");
+        }
+      });
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        menus.forEach(function (menu) {
+          menu.removeAttribute("open");
+        });
+      }
+    });
+
+    document.querySelectorAll(".mobile-more-menu a").forEach(function (link) {
+      link.addEventListener("click", function () {
+        link.closest("details").removeAttribute("open");
+      });
+    });
   });
 
   document.body.addEventListener("htmx:responseError", function () {

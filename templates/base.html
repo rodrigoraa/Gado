@@ -5,10 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#173f35">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="robots" content="noindex,nofollow">
   <title>{% block title %}Gestão Rural{% endblock %}</title>
   <link href="{% static 'vendor/bootstrap.min.css' %}" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260723-8">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260723-9">
   <script defer src="{% static 'vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
   <script defer src="{% static 'vendor/chart.umd.min.js' %}"></script>
@@ -67,9 +70,22 @@
     <nav class="mobile-nav" aria-label="Navegação no celular">
       <a href="{% url 'core:dashboard' %}" class="{% if request.path == '/' %}active{% endif %}"><span>⌂</span><small>Início</small></a>
       <a href="/rebanho/" class="{% if '/rebanho/' in request.path %}active{% endif %}"><span>♢</span><small>Rebanho</small></a>
-      <a href="{% url 'reproducao:coberturas' %}" class="{% if '/reproducao/' in request.path %}active{% endif %}"><span>↻</span><small>Coberturas</small></a>
       <a href="{% url 'leite:ordenha_nova' %}" class="primary-action"><span>＋</span><small>Leite</small></a>
-      <a href="{% url 'relatorios:leite' %}" class="{% if '/relatorios/' in request.path %}active{% endif %}"><span>▥</span><small>Relatório</small></a>
+      <a href="{% url 'reproducao:coberturas' %}" class="{% if '/reproducao/' in request.path %}active{% endif %}"><span>↻</span><small>Coberturas</small></a>
+      <details class="mobile-more">
+        <summary class="{% if '/lactacoes/' in request.path or '/saude/' in request.path or '/financeiro/' in request.path or '/relatorios/' in request.path or '/alertas/' in request.path or '/configuracoes/' in request.path or '/auditoria/' in request.path %}active{% endif %}" aria-label="Abrir mais opções">
+          <span>•••</span><small>Mais</small>
+        </summary>
+        <div class="mobile-more-menu">
+          <a href="{% url 'relatorios:index' %}"><span aria-hidden="true">▥</span> Relatórios</a>
+          <a href="{% url 'lactacao:lista' %}"><span aria-hidden="true">◌</span> Lactações</a>
+          <a href="{% url 'saude:inicio' %}"><span aria-hidden="true">✚</span> Saúde</a>
+          <a href="{% url 'financeiro:inicio' %}"><span aria-hidden="true">$</span> Financeiro</a>
+          <a href="{% url 'core:alertas' %}"><span aria-hidden="true">!</span> Alertas</a>
+          <a href="{% url 'core:configuracoes' %}"><span aria-hidden="true">⚙</span> Configurações</a>
+          {% if user.is_staff %}<a href="{% url 'auditoria:lista' %}"><span aria-hidden="true">≡</span> Auditoria</a>{% endif %}
+        </div>
+      </details>
     </nav>
   {% endif %}
   {% block scripts %}{% endblock %}

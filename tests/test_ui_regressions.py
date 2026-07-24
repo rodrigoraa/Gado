@@ -49,11 +49,15 @@ def test_navegacao_e_retornos_continuam_utilizaveis_sem_javascript(
         reverse("rebanho:animais"),
         reverse("reproducao:coberturas"),
         reverse("leite:ordenha_nova"),
-        reverse("relatorios:leite"),
+        reverse("relatorios:index"),
+        reverse("lactacao:lista"),
+        reverse("saude:inicio"),
+        reverse("financeiro:inicio"),
+        reverse("core:alertas"),
+        reverse("core:configuracoes"),
     ):
         assert f'href="{destino}"' in conteudo
-    assert f'href="{reverse("saude:inicio")}"' not in conteudo
-    assert f'href="{reverse("financeiro:inicio")}"' not in conteudo
+    assert '<details class="mobile-more">' in conteudo
 
     formulario = client.get(reverse("rebanho:animal_novo"))
     assert "javascript:" not in formulario.content.decode()
