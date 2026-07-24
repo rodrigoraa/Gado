@@ -21,7 +21,7 @@ from apps.rebanho.services import (
     salvar_animal,
 )
 from apps.reproducao.models import Cobertura
-from apps.reproducao.services import registrar_cobertura
+from apps.reproducao.services import cancelar_cobertura, registrar_cobertura
 
 pytestmark = pytest.mark.django_db
 
@@ -559,6 +559,39 @@ def test_lista_do_rebanho_exibe_animais_em_tabela_com_foto(client, django_user_m
     assert "<th>Ações</th>" in conteudo
     assert 'class="animal-avatar"' in conteudo
     assert "animais/mimosa/foto.jpg" in conteudo
+
+
+def test_lista_do_rebanho_nao_exibe_data_de_cobertura_cancelada(
+    client, django_user_model
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="lista-cobertura-cancelada",
+        password="teste",
+    )
+    client.force_login(usuario)
+    vaca = animal(identificacao=None, nome="Amarela")
+    boi = animal(identificacao=None, nome="Trovão", sexo=Animal.Sexo.MACHO)
+    data_cobertura = timezone.localdate() - timedelta(days=12)
+    cobertura = registrar_cobertura(
+        vaca=vaca,
+        touro=boi,
+        data_cobertura=data_cobertura,
+        tipo=Cobertura.Tipo.MONTA_NATURAL,
+        forma_identificacao=Cobertura.FormaIdentificacao.OBSERVADA,
+    )
+    cancelar_cobertura(
+        cobertura=cobertura,
+        justificativa="Cobertura cadastrada por engano.",
+    )
+
+    resposta = client.get(reverse("rebanho:animais"))
+    animal_listado = next(
+        item for item in resposta.context["animais"] if item.pk == vaca.pk
+    )
+
+    assert resposta.status_code == 200
+    assert animal_listado.data_ultima_cobertura is None
+    assert data_cobertura.strftime("%d/%m/%Y") not in resposta.content.decode()
 
 
 def test_excluir_vaca_mantem_bezerro_sem_mae(client, django_user_model) -> None:  # type: ignore[no-untyped-def]

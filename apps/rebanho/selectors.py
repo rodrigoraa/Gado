@@ -21,6 +21,7 @@ def listar_animais(
 
     ultima_cobertura = (
         Cobertura.objects.filter(vaca_id=OuterRef("pk"))
+        .exclude(situacao=Cobertura.Situacao.CANCELADA)
         .order_by("-data", "-criado_em")
         .values("data")[:1]
     )
