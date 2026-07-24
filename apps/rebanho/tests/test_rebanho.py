@@ -392,6 +392,32 @@ def test_cadastro_de_novilha_define_femea_e_permanece_no_formulario(
     assert novilha.categoria == "Novilha"
 
 
+def test_cadastro_de_novilha_aceita_data_de_nascimento_vazia(
+    client, django_user_model
+) -> None:  # type: ignore[no-untyped-def]
+    usuario = django_user_model.objects.create_user(
+        username="cadastro-novilha-sem-data",
+        password="teste",
+    )
+    client.force_login(usuario)
+
+    resposta = client.post(
+        reverse("rebanho:novilha_nova"),
+        {
+            "nome": "Novilha sem data",
+            "cor": "",
+            "sexo": Animal.Sexo.MACHO,
+            "data_nascimento": "",
+        },
+    )
+
+    novilha = Animal.objects.get(nome="Novilha sem data")
+    assert resposta.status_code == 302
+    assert resposta.url == reverse("rebanho:novilha_nova")
+    assert novilha.sexo == Animal.Sexo.FEMEA
+    assert novilha.data_nascimento is None
+
+
 def test_formulario_de_novilha_rejeita_idade_de_bezerra() -> None:
     formulario = CadastroNovilhaForm(
         data={

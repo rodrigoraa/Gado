@@ -140,7 +140,8 @@ class AnimalFormView(LoginRequiredMixin, View):
         elif self.novilha:
             titulo = "Cadastrar novilha"
             descricao = (
-                "Informe o nome e a data de nascimento. O sexo será registrado como fêmea."
+                "Informe o nome. A data de nascimento é opcional e o sexo será registrado "
+                "como fêmea."
             )
         else:
             titulo = "Cadastrar animal"

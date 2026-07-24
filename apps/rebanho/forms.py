@@ -97,6 +97,7 @@ class CadastroBezerroForm(AnimalForm):
 class CadastroNovilhaForm(AnimalForm):
     data_nascimento = forms.DateField(
         label=_("Data de nascimento"),
+        required=False,
         widget=forms.DateInput(attrs={"type": "date"}),
     )
 
@@ -113,7 +114,7 @@ class CadastroNovilhaForm(AnimalForm):
 
     def clean_data_nascimento(self):  # type: ignore[no-untyped-def]
         data_nascimento = self.cleaned_data["data_nascimento"]
-        if data_nascimento > Animal.data_limite_bezerro():
+        if data_nascimento and data_nascimento > Animal.data_limite_bezerro():
             raise ValidationError(
                 _("Pela data informada, este animal ainda pertence à categoria bezerra.")
             )
