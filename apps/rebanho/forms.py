@@ -37,10 +37,15 @@ class LoteForm(BootstrapFormMixin, forms.ModelForm):
 
 class AnimalForm(BootstrapFormMixin, forms.ModelForm):
     nome = forms.CharField(label=_("Nome"), max_length=100, required=True)
+    data_nascimento = forms.DateField(
+        label=_("Data de nascimento"),
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
 
     class Meta:
         model = Animal
-        fields = ("nome", "cor", "sexo", "tipo_animal", "mae")
+        fields = ("nome", "cor", "sexo", "tipo_animal", "data_nascimento", "mae")
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, **kwargs)
@@ -66,7 +71,9 @@ class AnimalForm(BootstrapFormMixin, forms.ModelForm):
             "identificacao",
             "identificacao_provisoria",
         )
-        self.order_fields(("nome", "cor", "sexo", "tipo_animal", "mae"))
+        self.order_fields(
+            ("nome", "cor", "sexo", "tipo_animal", "data_nascimento", "mae")
+        )
 
 
 class CadastroBezerroForm(AnimalForm):
@@ -86,14 +93,8 @@ class CadastroBezerroForm(AnimalForm):
 
 
 class CadastroNovilhaForm(AnimalForm):
-    data_nascimento = forms.DateField(
-        label=_("Data de nascimento"),
-        required=False,
-        widget=forms.DateInput(attrs={"type": "date"}),
-    )
-
     class Meta(AnimalForm.Meta):
-        fields = (*AnimalForm.Meta.fields, "data_nascimento")
+        fields = AnimalForm.Meta.fields
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, **kwargs)

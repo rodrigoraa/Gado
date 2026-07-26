@@ -139,8 +139,7 @@ class AnimalFormView(LoginRequiredMixin, View):
         elif self.bezerro:
             titulo = "Cadastrar bezerro"
             descricao = (
-                "Informe nome e sexo. Cor e mãe são opcionais. "
-                "O nascimento será registrado como hoje."
+                "Informe nome e sexo. Cor, data de nascimento e mãe são opcionais."
             )
         elif self.novilha:
             titulo = "Cadastrar novilha"
@@ -151,7 +150,7 @@ class AnimalFormView(LoginRequiredMixin, View):
         else:
             titulo = "Cadastrar animal"
             descricao = (
-                "Informe nome, sexo e tipo de animal. A cor é opcional. "
+                "Informe nome, sexo e tipo de animal. Cor e data de nascimento são opcionais. "
                 "Ao escolher bezerro, você também pode informar a mãe."
             )
         return {
@@ -183,7 +182,6 @@ class AnimalFormView(LoginRequiredMixin, View):
                 hoje = timezone.localdate()
                 dados.update(
                     {
-                        "data_nascimento": hoje,
                         "data_entrada": hoje,
                         "origem": Animal.Origem.NASCIDO_SITIO,
                     }

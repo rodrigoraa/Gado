@@ -21,6 +21,7 @@
       <dt>Tipo de animal</dt><dd>{{ animal.get_tipo_animal_display }}</dd>
       <dt>Mãe</dt><dd>{% if animal.mae %}<a href="{% url 'rebanho:animal_detalhe' animal.mae.pk %}">{{ animal.mae }}</a>{% else %}Não informada{% endif %}</dd>
       <dt>Nascimento</dt><dd>{{ animal.data_nascimento|date:"d/m/Y"|default:"Não informado" }}</dd>
+      <dt>Idade</dt><dd>{{ animal.idade }}</dd>
     </dl>
   </article>
 

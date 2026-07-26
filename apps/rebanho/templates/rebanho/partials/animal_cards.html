@@ -5,6 +5,7 @@
         <tr>
           <th>Animal</th>
           <th>Sexo</th>
+          <th>Idade</th>
           <th>Data de cobertura</th>
           <th>Mãe</th>
           <th>Ações</th>
@@ -27,6 +28,7 @@
               </a>
             </td>
             <td data-label="Sexo">{{ animal.get_sexo_display|default:"Não informado" }}</td>
+            <td data-label="Idade">{{ animal.idade }}</td>
             <td data-label="Cobertura">
               {{ animal.data_ultima_cobertura|date:"d/m/Y"|default:"—" }}
             </td>
