@@ -374,7 +374,6 @@ class PartoCreateView(LoginRequiredMixin, View):
                     necessitou_auxilio=form.cleaned_data["necessitou_auxilio"],
                     responsavel=form.cleaned_data["responsavel"],
                     observacoes=form.cleaned_data["observacoes"],
-                    iniciar_lactacao_automaticamente=form.cleaned_data["iniciar_lactacao"],
                 )
             except ValidationError as erro:
                 _erros_servico(form, erro)

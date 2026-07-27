@@ -50,6 +50,16 @@ def test_formulario_de_cobertura_exclui_bezerros_e_bezerras() -> None:
         sexo=Animal.Sexo.MACHO,
         data_nascimento=timezone.localdate(),
     )
+    bezerra_sem_data = salvar_animal(
+        identificacao="BEZERRA-SEM-DATA-COB",
+        sexo=Animal.Sexo.FEMEA,
+        tipo_animal=Animal.TipoAnimal.BEZERRO,
+    )
+    bezerro_sem_data = salvar_animal(
+        identificacao="BEZERRO-SEM-DATA-COB",
+        sexo=Animal.Sexo.MACHO,
+        tipo_animal=Animal.TipoAnimal.BEZERRO,
+    )
     vaca_adulta = salvar_animal(
         identificacao="VACA-COB",
         sexo=Animal.Sexo.FEMEA,
@@ -69,6 +79,8 @@ def test_formulario_de_cobertura_exclui_bezerros_e_bezerras() -> None:
     assert boi_adulto.pk in bois
     assert bezerra.pk not in vacas
     assert bezerro.pk not in bois
+    assert bezerra_sem_data.pk not in vacas
+    assert bezerro_sem_data.pk not in bois
     assert formulario.initial["touro"] == boi_adulto.pk
 
 
@@ -90,7 +102,31 @@ def test_servico_rejeita_bezerro_macho_como_reprodutor(vaca: Animal) -> None:
         data_nascimento=timezone.localdate() - timedelta(days=60),
     )
 
-    with pytest.raises(ValidationError, match="bezerro macho"):
+    with pytest.raises(ValidationError, match="Selecione um boi"):
+        criar_cobertura(vaca, bezerro)
+
+
+def test_servico_rejeita_tipo_bezerro_sem_data_na_cobertura() -> None:
+    bezerra = salvar_animal(
+        identificacao="BEZERRA-SERVICO-COB",
+        sexo=Animal.Sexo.FEMEA,
+        tipo_animal=Animal.TipoAnimal.BEZERRO,
+    )
+    bezerro = salvar_animal(
+        identificacao="BEZERRO-SERVICO-COB",
+        sexo=Animal.Sexo.MACHO,
+        tipo_animal=Animal.TipoAnimal.BEZERRO,
+    )
+
+    with pytest.raises(ValidationError, match="vaca ou novilha"):
+        criar_cobertura(bezerra)
+
+    vaca = salvar_animal(
+        identificacao="VACA-SERVICO-COB",
+        sexo=Animal.Sexo.FEMEA,
+        tipo_animal=Animal.TipoAnimal.VACA,
+    )
+    with pytest.raises(ValidationError, match="Selecione um boi"):
         criar_cobertura(vaca, bezerro)
 
 

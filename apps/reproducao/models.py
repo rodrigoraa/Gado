@@ -142,6 +142,11 @@ class Cobertura(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
                 erros["vaca"] = _("A cobertura só pode ser registrada para uma fêmea.")
             elif not self.vaca.esta_ativo:
                 erros["vaca"] = _("A cobertura só pode ser registrada para uma fêmea ativa.")
+            elif self.vaca.tipo_animal not in {
+                Animal.TipoAnimal.VACA,
+                Animal.TipoAnimal.NOVILHA,
+            }:
+                erros["vaca"] = _("Selecione uma vaca ou novilha para a cobertura.")
             elif self.data and self.vaca.eh_bezerro_em(self.data):
                 erros["vaca"] = _("Uma bezerra ainda não pode receber cobertura.")
             if self.data and self.vaca.data_nascimento and self.data < self.vaca.data_nascimento:
@@ -151,6 +156,8 @@ class Cobertura(ExclusaoFisicaProtegidaMixin, TimeStampedUUIDModel):
                 erros["touro"] = _("O reprodutor deve ser um macho.")
             elif not self.touro.esta_ativo:
                 erros["touro"] = _("O reprodutor deve estar ativo.")
+            elif self.touro.tipo_animal != Animal.TipoAnimal.BOI:
+                erros["touro"] = _("Selecione um boi para a cobertura.")
             elif self.data and self.touro.eh_bezerro_em(self.data):
                 erros["touro"] = _("Um bezerro macho ainda não pode ser usado em coberturas.")
         if self.data and self.data > hoje:

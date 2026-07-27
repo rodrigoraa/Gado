@@ -29,6 +29,11 @@ def criar_animal(*, identificacao: str, sexo: str = Animal.Sexo.FEMEA) -> Animal
     return Animal.objects.create(
         identificacao=identificacao,
         sexo=sexo,
+        tipo_animal=(
+            Animal.TipoAnimal.VACA
+            if sexo == Animal.Sexo.FEMEA
+            else Animal.TipoAnimal.BOI
+        ),
         data_nascimento=timezone.localdate() - timedelta(days=365 * 3),
         situacao=Animal.Situacao.ATIVO,
     )
@@ -50,13 +55,16 @@ def test_navegacao_e_retornos_continuam_utilizaveis_sem_javascript(
         reverse("reproducao:coberturas"),
         reverse("leite:ordenha_nova"),
         reverse("relatorios:index"),
+    ):
+        assert f'href="{destino}"' in conteudo
+    for destino_removido in (
         reverse("lactacao:lista"),
         reverse("saude:inicio"),
         reverse("financeiro:inicio"),
         reverse("core:alertas"),
         reverse("core:configuracoes"),
     ):
-        assert f'href="{destino}"' in conteudo
+        assert f'href="{destino_removido}"' not in conteudo
     assert '<details class="mobile-more">' in conteudo
 
     formulario = client.get(reverse("rebanho:animal_novo"))
@@ -86,6 +94,7 @@ def test_formulario_de_parto_oferece_fallback_para_gemeos_e_cadastra_duas_crias(
     assert formset.max_num == 5
     assert 'id="adicionar-bezerro"' in conteudo
     assert "bezerros-__prefix__-nome" in conteudo
+    assert "Iniciar lactação" not in conteudo
 
     resposta = client.post(
         url,
@@ -115,6 +124,12 @@ def test_formulario_de_parto_oferece_fallback_para_gemeos_e_cadastra_duas_crias(
     )
     assert parto.quantidade_bezerros == 2
     assert Animal.objects.filter(mae=vaca, pai=touro, nascimento__parto=parto).count() == 2
+    detalhe_parto = client.get(
+        reverse("reproducao:parto_detalhe", kwargs={"parto_id": parto.pk})
+    )
+    assert reverse("lactacao:nova_do_parto", kwargs={"parto_id": parto.pk}) not in (
+        detalhe_parto.content.decode()
+    )
 
 
 def test_segunda_ficha_vazia_do_parto_sem_javascript_e_ignorada() -> None:

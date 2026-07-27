@@ -25,8 +25,14 @@ class CoberturaForm(BootstrapFormMixin, forms.ModelForm):
             idade_adulta,
             situacao=Animal.Situacao.ATIVO,
         ).order_by("nome", "identificacao")
-        self.fields["vaca"].queryset = elegiveis.filter(sexo=Animal.Sexo.FEMEA)
-        self.fields["touro"].queryset = elegiveis.filter(sexo=Animal.Sexo.MACHO)
+        self.fields["vaca"].queryset = elegiveis.filter(
+            sexo=Animal.Sexo.FEMEA,
+            tipo_animal__in=(Animal.TipoAnimal.VACA, Animal.TipoAnimal.NOVILHA),
+        )
+        self.fields["touro"].queryset = elegiveis.filter(
+            sexo=Animal.Sexo.MACHO,
+            tipo_animal=Animal.TipoAnimal.BOI,
+        )
         self.fields["touro"].required = False
         self.fields["touro"].label = _("Boi adulto, se conhecido")
         if not self.is_bound and not self.initial.get("touro"):
@@ -97,10 +103,6 @@ class PerdaGestacionalForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class PartoForm(BootstrapFormMixin, forms.ModelForm):
-    iniciar_lactacao = forms.BooleanField(
-        label=_("Iniciar lactação para esta vaca"), required=False, initial=True
-    )
-
     class Meta:
         model = Parto
         fields = (
