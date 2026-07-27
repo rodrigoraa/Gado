@@ -14,6 +14,4 @@ def isolar_arquivos_gerados(settings: Any) -> Iterator[None]:
         media = raiz / "media"
         media.mkdir()
         settings.MEDIA_ROOT = media
-        settings.BACKUP_STATUS_FILE = media / ".sistema" / "ultimo_backup.json"
-        settings.DISK_MONITOR_PATH = media
         yield

@@ -48,10 +48,7 @@ INSTALLED_APPS = [
     "apps.usuarios.apps.UsuariosConfig",
     "apps.rebanho.apps.RebanhoConfig",
     "apps.reproducao.apps.ReproducaoConfig",
-    "apps.lactacao.apps.LactacaoConfig",
     "apps.leite.apps.LeiteConfig",
-    "apps.saude.apps.SaudeConfig",
-    "apps.financeiro.apps.FinanceiroConfig",
     "apps.relatorios.apps.RelatoriosConfig",
     "apps.auditoria.apps.AuditoriaConfig",
 ]
@@ -123,16 +120,6 @@ MEDIA_URL = "/arquivos/"
 MEDIA_ROOT = BASE_DIR / "media"
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
 FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
-
-BACKUP_MONITOR_ENABLED = env_bool("BACKUP_MONITOR_ENABLED", True)
-BACKUP_MAX_AGE_HOURS = max(1, env_int("BACKUP_MAX_AGE_HOURS", 36))
-BACKUP_STATUS_FILE = env_path(
-    "BACKUP_STATUS_FILE",
-    MEDIA_ROOT / ".sistema" / "ultimo_backup.json",
-)
-DISK_MONITOR_ENABLED = env_bool("DISK_MONITOR_ENABLED", True)
-DISK_MONITOR_PATH = env_path("DISK_MONITOR_PATH", MEDIA_ROOT)
-DISK_MIN_FREE_PERCENT = min(100, max(1, env_int("DISK_MIN_FREE_PERCENT", 10)))
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"

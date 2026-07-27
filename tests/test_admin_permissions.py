@@ -3,10 +3,6 @@ from types import SimpleNamespace
 from django.contrib.admin import AdminSite
 from django.test import RequestFactory
 
-from apps.financeiro.admin import FechamentoLeiteAdmin, PrecoLeiteAdmin, RecebimentoLeiteAdmin
-from apps.financeiro.models import FechamentoLeite, PrecoLeite, RecebimentoLeite
-from apps.lactacao.admin import LactacaoAdmin
-from apps.lactacao.models import Lactacao
 from apps.leite.admin import OrdenhaAdmin, ProducaoAnimalAdmin
 from apps.leite.models import Ordenha, ProducaoAnimal
 from apps.rebanho.admin import AnimalAdmin
@@ -27,11 +23,8 @@ def test_admins_com_efeitos_colaterais_sao_somente_leitura() -> None:
     protegidos = (
         (DiagnosticoGestacaoAdmin, DiagnosticoGestacao),
         (PartoAdmin, Parto),
-        (LactacaoAdmin, Lactacao),
         (OrdenhaAdmin, Ordenha),
         (ProducaoAnimalAdmin, ProducaoAnimal),
-        (FechamentoLeiteAdmin, FechamentoLeite),
-        (RecebimentoLeiteAdmin, RecebimentoLeite),
     )
 
     for admin_class, model in protegidos:
@@ -42,7 +35,7 @@ def test_admins_com_efeitos_colaterais_sao_somente_leitura() -> None:
         assert not model_admin.has_delete_permission(request)
 
 
-def test_parentesco_e_preco_historico_ficam_bloqueados_na_edicao() -> None:
+def test_parentesco_fica_bloqueado_na_edicao() -> None:
     site = AdminSite()
     request = _request()
 
@@ -51,8 +44,3 @@ def test_parentesco_e_preco_historico_ficam_bloqueados_na_edicao() -> None:
     assert "pai" not in animal_admin.get_readonly_fields(request, None)
     campos_animal = animal_admin.get_readonly_fields(request, Animal())
     assert {"mae", "pai"}.issubset(campos_animal)
-
-    preco_admin = PrecoLeiteAdmin(PrecoLeite, site)
-    assert "valor_litro" not in preco_admin.get_readonly_fields(request, None)
-    campos_preco = preco_admin.get_readonly_fields(request, PrecoLeite())
-    assert {"laticinio", "data_inicial", "data_final", "valor_litro"}.issubset(campos_preco)

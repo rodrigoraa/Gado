@@ -264,9 +264,7 @@ def test_cancelamento_de_cobertura_registra_motivo_automaticamente(vaca: Animal)
     cobertura = criar_cobertura(vaca)
     cancelada = cancelar_cobertura(cobertura=cobertura)
     assert cancelada.situacao == Cobertura.Situacao.CANCELADA
-    assert cancelada.motivo_cancelamento == (
-        "Alteração registrada automaticamente pelo sistema."
-    )
+    assert cancelada.motivo_cancelamento == ("Alteração registrada automaticamente pelo sistema.")
 
 
 def test_perda_gestacional_preserva_registro_e_encerra(vaca: Animal) -> None:
@@ -426,9 +424,7 @@ def test_lista_de_coberturas_tem_resposta_parcial_htmx(
 def test_cobertura_expoe_acoes_de_editar_e_cancelar(
     client, django_user_model, vaca: Animal
 ) -> None:  # type: ignore[no-untyped-def]
-    usuario = django_user_model.objects.create_user(
-        username="acoes-cobertura", password="teste"
-    )
+    usuario = django_user_model.objects.create_user(username="acoes-cobertura", password="teste")
     client.force_login(usuario)
     cobertura = criar_cobertura(vaca)
     url_editar = reverse(
@@ -458,9 +454,7 @@ def test_cobertura_expoe_acoes_de_editar_e_cancelar(
 def test_acoes_da_cobertura_corrigem_data_e_cancelam(
     client, django_user_model, vaca: Animal
 ) -> None:  # type: ignore[no-untyped-def]
-    usuario = django_user_model.objects.create_user(
-        username="alterar-cobertura", password="teste"
-    )
+    usuario = django_user_model.objects.create_user(username="alterar-cobertura", password="teste")
     client.force_login(usuario)
     cobertura = criar_cobertura(vaca)
     nova_data = cobertura.data + timedelta(days=1)
@@ -516,12 +510,8 @@ def test_cobertura_cancelada_some_das_listas_mas_preserva_historico(
     )
     lista = client.get(reverse("reproducao:coberturas"))
     lista_por_boi = client.get(reverse("reproducao:coberturas_por_touro"))
-    detalhe_vaca = client.get(
-        reverse("rebanho:animal_detalhe", kwargs={"animal_id": vaca.pk})
-    )
-    detalhe_boi = client.get(
-        reverse("rebanho:animal_detalhe", kwargs={"animal_id": touro.pk})
-    )
+    detalhe_vaca = client.get(reverse("rebanho:animal_detalhe", kwargs={"animal_id": vaca.pk}))
+    detalhe_boi = client.get(reverse("rebanho:animal_detalhe", kwargs={"animal_id": touro.pk}))
 
     assert resposta.status_code == 302
     assert url_detalhe not in lista.content.decode()

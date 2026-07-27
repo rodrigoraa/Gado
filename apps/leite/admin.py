@@ -13,7 +13,7 @@ class SemExclusaoAdmin(admin.ModelAdmin):
 class ProducaoAnimalInline(SomenteLeituraInlineMixin, admin.TabularInline):
     model = ProducaoAnimal
     extra = 0
-    autocomplete_fields = ("vaca", "lactacao")
+    autocomplete_fields = ("vaca",)
     readonly_fields = ("criado_em", "atualizado_em")
     can_delete = False
 
@@ -45,17 +45,17 @@ class OrdenhaAdmin(SomenteLeituraAdminMixin, admin.ModelAdmin):
 
 @admin.register(ProducaoAnimal)
 class ProducaoAnimalAdmin(SomenteLeituraAdminMixin, admin.ModelAdmin):
-    list_display = ("ordenha", "vaca", "lactacao", "quantidade_litros")
+    list_display = ("ordenha", "vaca", "quantidade_litros")
     list_filter = ("ordenha__data",)
     search_fields = ("vaca__identificacao", "vaca__nome", "observacoes")
-    autocomplete_fields = ("ordenha", "vaca", "lactacao")
+    autocomplete_fields = ("ordenha", "vaca")
     readonly_fields = ("id", "criado_em", "atualizado_em")
 
 
 @admin.register(DestinoLeite)
 class DestinoLeiteAdmin(SemExclusaoAdmin):
-    list_display = ("data", "tipo", "quantidade_litros", "ordenha", "tratamento")
+    list_display = ("data", "tipo", "quantidade_litros", "ordenha")
     list_filter = ("tipo", "data")
     search_fields = ("observacoes",)
-    autocomplete_fields = ("ordenha", "tratamento")
+    autocomplete_fields = ("ordenha",)
     readonly_fields = ("id", "criado_em", "atualizado_em")

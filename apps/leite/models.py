@@ -151,12 +151,6 @@ class ProducaoAnimal(TimeStampedUUIDModel):
         related_name="producoes_leite",
         on_delete=models.PROTECT,
     )
-    lactacao = models.ForeignKey(
-        "lactacao.Lactacao",
-        verbose_name="lactação",
-        related_name="producoes",
-        on_delete=models.PROTECT,
-    )
     quantidade_litros = models.DecimalField(
         "quantidade (L)",
         max_digits=10,
@@ -180,7 +174,6 @@ class ProducaoAnimal(TimeStampedUUIDModel):
         ]
         indexes = [
             models.Index(fields=("vaca", "ordenha"), name="leite_prod_vaca_ord_idx"),
-            models.Index(fields=("lactacao",), name="leite_prod_lactacao_idx"),
         ]
 
     def __str__(self) -> str:
@@ -195,11 +188,6 @@ class ProducaoAnimal(TimeStampedUUIDModel):
             sexo = getattr(self.vaca, "sexo", None)
             if sexo != "F":
                 errors["vaca"] = "A produção individual só pode ser registrada para uma fêmea."
-        if self.lactacao_id and self.vaca_id:
-            if self.lactacao.vaca_id != self.vaca_id:
-                errors["lactacao"] = "A lactação selecionada não pertence à vaca informada."
-            if getattr(self.lactacao, "situacao", None) != "ATIVA":
-                errors["lactacao"] = "A vaca não possui uma lactação ativa."
         if errors:
             raise ValidationError(errors)
 
@@ -221,14 +209,6 @@ class DestinoLeite(TimeStampedUUIDModel):
         Ordenha,
         verbose_name="ordenha",
         related_name="destinos",
-        on_delete=models.PROTECT,
-        blank=True,
-        null=True,
-    )
-    tratamento = models.ForeignKey(
-        "saude.Tratamento",
-        verbose_name="tratamento relacionado",
-        related_name="descartes_leite",
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -265,7 +245,5 @@ class DestinoLeite(TimeStampedUUIDModel):
         errors: dict[str, str] = {}
         if self.data and self.data > timezone.localdate():
             errors["data"] = "A data do destino não pode estar no futuro."
-        if self.tratamento_id and self.tipo != self.Tipo.DESCARTE:
-            errors["tipo"] = "Um destino ligado a tratamento deve ser do tipo descarte."
         if errors:
             raise ValidationError(errors)

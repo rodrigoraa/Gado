@@ -67,10 +67,8 @@ def _inferir_tipo_animal(dados: dict[str, Any]) -> str:
 def _primeira_data_dependente(animal: Animal) -> date | None:
     """Obtém o primeiro evento que passaria a anteceder um nascimento corrigido."""
 
-    from apps.lactacao.models import Lactacao
     from apps.leite.models import ProducaoAnimal
     from apps.reproducao.models import Cobertura, DiagnosticoGestacao, Parto, PerdaGestacional
-    from apps.saude.models import Tratamento
 
     valores = [
         animal.movimentacoes_lote.aggregate(valor=Min("data"))["valor"],
@@ -84,9 +82,7 @@ def _primeira_data_dependente(animal: Animal) -> date | None:
         DiagnosticoGestacao.objects.filter(vaca=animal).aggregate(valor=Min("data"))["valor"],
         PerdaGestacional.objects.filter(vaca=animal).aggregate(valor=Min("data"))["valor"],
         Parto.objects.filter(vaca=animal).aggregate(valor=Min("data_hora"))["valor"],
-        Lactacao.objects.filter(vaca=animal).aggregate(valor=Min("data_inicio"))["valor"],
         ProducaoAnimal.objects.filter(vaca=animal).aggregate(valor=Min("ordenha__data"))["valor"],
-        Tratamento.objects.filter(animal=animal).aggregate(valor=Min("data_hora"))["valor"],
     ]
     datas = [data_convertida for valor in valores if (data_convertida := _como_data(valor))]
     if animal.data_entrada:
@@ -97,7 +93,6 @@ def _primeira_data_dependente(animal: Animal) -> date | None:
 
 
 def _validar_correcao_sexo(*, animal: Animal, novo_sexo: str) -> None:
-    from apps.lactacao.models import Lactacao
     from apps.leite.models import ProducaoAnimal
     from apps.reproducao.models import Cobertura, DiagnosticoGestacao, Parto, PerdaGestacional
 
@@ -109,7 +104,6 @@ def _validar_correcao_sexo(*, animal: Animal, novo_sexo: str) -> None:
                 DiagnosticoGestacao.objects.filter(vaca=animal).exists(),
                 PerdaGestacional.objects.filter(vaca=animal).exists(),
                 Parto.objects.filter(vaca=animal).exists(),
-                Lactacao.objects.filter(vaca=animal).exists(),
                 ProducaoAnimal.objects.filter(vaca=animal).exists(),
             )
         )
@@ -294,7 +288,6 @@ def inativar_animal(
     motivo: str = "",
     data_saida: date | None = None,
 ) -> Animal:
-    from apps.lactacao.models import Lactacao
     from apps.reproducao.models import Cobertura
 
     animal = Animal.objects.select_for_update().get(pk=animal.pk)
@@ -303,15 +296,6 @@ def inativar_animal(
     if situacao == Animal.Situacao.ATIVO or situacao not in Animal.Situacao.values:
         raise ValidationError({"situacao": _("Selecione uma situação de saída válida.")})
     motivo = motivo.strip() or REGISTRO_AUTOMATICO
-    lactacao_ativa = (
-        Lactacao.objects.select_for_update()
-        .filter(vaca=animal, situacao=Lactacao.Situacao.ATIVA)
-        .first()
-    )
-    if lactacao_ativa:
-        raise ValidationError(
-            {"situacao": _("Seque ou encerre a lactação ativa antes de inativar a vaca.")}
-        )
     cobertura_aberta = (
         Cobertura.objects.select_for_update()
         .filter(vaca=animal, situacao__in=Cobertura.SITUACOES_ABERTAS)

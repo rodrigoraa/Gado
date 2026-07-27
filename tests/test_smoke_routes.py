@@ -3,11 +3,8 @@ from django.contrib.auth import get_user_model
 
 ROTAS_AUTENTICADAS = (
     "/",
-    "/configuracoes/",
-    "/alertas/",
     "/rebanho/",
     "/rebanho/animais/novo/",
-    "/rebanho/novilhas/nova/",
     "/rebanho/racas/",
     "/rebanho/lotes/",
     "/reproducao/",
@@ -16,28 +13,14 @@ ROTAS_AUTENTICADAS = (
     "/reproducao/perdas/nova/",
     "/reproducao/partos/",
     "/reproducao/partos/novo/",
-    "/lactacoes/",
-    "/lactacoes/nova/",
     "/leite/",
     "/leite/ordenhas/nova/",
     "/leite/producoes/",
     "/leite/destinos/",
-    "/saude/",
-    "/saude/produtos/",
-    "/saude/tratamentos/novo/",
-    "/financeiro/",
-    "/financeiro/laticinios/",
-    "/financeiro/precos/",
-    "/financeiro/entregas/",
-    "/financeiro/fechamentos/",
-    "/financeiro/recebimentos/",
     "/relatorios/",
     "/relatorios/rebanho/",
     "/relatorios/reproducao/",
     "/relatorios/leite/",
-    "/relatorios/financeiro/",
-    "/relatorios/fechamentos/",
-    "/relatorios/recebimentos/",
     "/auditoria/",
     "/senha/alterar/",
 )
@@ -70,5 +53,5 @@ def test_post_sem_csrf_e_rejeitado(usuario):
 
     client = Client(enforce_csrf_checks=True)
     client.force_login(usuario)
-    resposta = client.post("/configuracoes/", {"nome_propriedade": "Sem token"})
+    resposta = client.post("/rebanho/animais/novo/", {"nome": "Sem token"})
     assert resposta.status_code == 403

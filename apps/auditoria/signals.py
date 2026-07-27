@@ -19,10 +19,7 @@ APPS_AUDITADOS = {
     "core",
     "rebanho",
     "reproducao",
-    "lactacao",
     "leite",
-    "financeiro",
-    "saude",
 }
 IGNORAR_CAMPOS = {"criado_em", "atualizado_em"}
 

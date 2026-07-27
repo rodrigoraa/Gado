@@ -288,9 +288,8 @@ def registrar_parto(
     necessitou_auxilio: bool = False,
     responsavel: str = "",
     observacoes: str = "",
-    iniciar_lactacao_automaticamente: bool = False,
 ) -> Parto:
-    """Registra parto, crias, filiação, cobertura e lactação numa só transação."""
+    """Registra parto, crias, filiação e cobertura numa só transação."""
 
     vaca = Animal.objects.select_for_update().get(pk=vaca.pk)
     if not vaca.esta_ativo:
@@ -390,10 +389,6 @@ def registrar_parto(
             justificativa=f"Parto {parto.pk}",
         )
 
-    if iniciar_lactacao_automaticamente:
-        from apps.lactacao.services import iniciar_lactacao
-
-        iniciar_lactacao(vaca=vaca, parto=parto, data_inicio=data_nascimento)
     return parto
 
 
@@ -446,19 +441,6 @@ def corrigir_parto(*, parto: Parto, justificativa: str = "", **alteracoes: Any) 
         )
     }
     if nova_data != data_anterior_local:
-        from apps.lactacao.models import Lactacao
-        from apps.saude.models import Tratamento
-
-        lactacao = Lactacao.objects.select_for_update().filter(parto=parto).first()
-        if lactacao:
-            if lactacao.data_inicio < nova_data and lactacao.data_inicio != data_anterior_local:
-                raise ValidationError(
-                    {"data_hora": _("A nova data ficaria depois do início da lactação vinculada.")}
-                )
-            if lactacao.producoes.filter(ordenha__data__lt=nova_data).exists():
-                raise ValidationError(
-                    {"data_hora": _("Há produção de leite anterior à nova data do parto.")}
-                )
         for nascimento in nascimentos:
             animal = animais[nascimento.animal_id]
             if animal.movimentacoes_lote.filter(data__lt=nova_data).exists():
@@ -468,10 +450,6 @@ def corrigir_parto(*, parto: Parto, justificativa: str = "", **alteracoes: Any) 
             if animal.pesagens.filter(data__lt=nova_data).exists():
                 raise ValidationError(
                     {"data_hora": _("Há pesagem de cria anterior à nova data do parto.")}
-                )
-            if Tratamento.objects.filter(animal=animal, data_hora__date__lt=nova_data).exists():
-                raise ValidationError(
-                    {"data_hora": _("Há tratamento de cria anterior à nova data do parto.")}
                 )
             if (
                 animal.data_entrada
@@ -504,13 +482,6 @@ def corrigir_parto(*, parto: Parto, justificativa: str = "", **alteracoes: Any) 
                 animal.data_saida = nova_data
             _validar_salvar(animal)
 
-        from apps.lactacao.models import Lactacao
-
-        lactacao = Lactacao.objects.select_for_update().filter(parto=parto).first()
-        if lactacao and lactacao.data_inicio == data_anterior_local:
-            lactacao.data_inicio = nova_data
-            _validar_salvar(lactacao)
-
     historico = HistoricoParto(
         parto=parto,
         evento="CORRECAO",
@@ -535,15 +506,6 @@ def cancelar_parto(*, parto: Parto, justificativa: str = "") -> Parto:
             _(
                 "O parto possui nascimentos vinculados e não pode ser cancelado. "
                 "Use a correção para preservar a filiação e o histórico."
-            )
-        )
-    from apps.lactacao.models import Lactacao
-
-    if Lactacao.objects.select_for_update().filter(parto=parto).exists():
-        raise ValidationError(
-            _(
-                "O parto possui lactação vinculada e não pode ser cancelado. "
-                "Corrija primeiro o ciclo produtivo relacionado."
             )
         )
     anteriores = _dados_parto(parto)

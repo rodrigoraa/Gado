@@ -5,7 +5,6 @@ from typing import Any
 from django import forms
 from django.db.models import Q
 
-from apps.lactacao.models import Lactacao
 from apps.rebanho.models import Animal
 
 from .models import DestinoLeite, Ordenha, ProducaoAnimal
@@ -76,11 +75,10 @@ class ProducaoAnimalForm(BootstrapFormMixin, forms.ModelForm):
         criterio_vacas = Q(
             sexo=Animal.Sexo.FEMEA,
             situacao=Animal.Situacao.ATIVO,
-            lactacoes__situacao=Lactacao.Situacao.ATIVA,
         )
         if self.instance.vaca_id:
             criterio_vacas |= Q(pk=self.instance.vaca_id)
-        self.fields["vaca"].queryset = Animal.objects.filter(criterio_vacas).distinct()
+        self.fields["vaca"].queryset = Animal.objects.filter(criterio_vacas)
         if not self.instance._state.adding:
             self.fields["ordenha"].disabled = True
             self.fields["vaca"].disabled = True

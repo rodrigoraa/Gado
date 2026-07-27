@@ -9,9 +9,6 @@ ROTAS_RELATORIO = (
     "/relatorios/rebanho/",
     "/relatorios/reproducao/",
     "/relatorios/leite/",
-    "/relatorios/financeiro/",
-    "/relatorios/fechamentos/",
-    "/relatorios/recebimentos/",
 )
 
 

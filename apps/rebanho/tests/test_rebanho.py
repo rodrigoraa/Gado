@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.models import ArquivoAnexo
-from apps.rebanho.forms import AnimalForm, CadastroBezerroForm, CadastroNovilhaForm
+from apps.rebanho.forms import AnimalForm
 from apps.rebanho.models import Animal, Lote
 from apps.rebanho.selectors import linha_do_tempo
 from apps.rebanho.services import (
@@ -298,22 +298,6 @@ def test_formulario_de_animal_lista_somente_vacas_ativas_como_mae() -> None:
     assert vaca_inativa not in maes_disponiveis
 
 
-def test_formulario_de_bezerro_acrescenta_somente_a_mae_opcional() -> None:
-    formulario = CadastroBezerroForm()
-
-    assert list(formulario.fields) == [
-        "nome",
-        "cor",
-        "sexo",
-        "tipo_animal",
-        "data_nascimento",
-        "mae",
-    ]
-    assert formulario["tipo_animal"].value() == Animal.TipoAnimal.BEZERRO
-    assert formulario.fields["tipo_animal"].widget.input_type == "hidden"
-    assert formulario.fields["mae"].required is False
-
-
 def test_cadastro_de_animal_salva_tipo_informado(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(username="cadastro-minimo", password="teste")
     client.force_login(usuario)
@@ -338,9 +322,7 @@ def test_cadastro_de_animal_salva_tipo_informado(client, django_user_model) -> N
     assert cadastrado.data_nascimento is None
 
 
-def test_cadastro_e_edicao_salvam_nascimento_e_exibem_idade(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
+def test_cadastro_e_edicao_salvam_nascimento_e_exibem_idade(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(
         username="cadastro-animal-com-idade",
         password="teste",
@@ -363,9 +345,7 @@ def test_cadastro_e_edicao_salvam_nascimento_e_exibem_idade(
     jade = Animal.objects.get(nome="Jade")
     assert jade.data_nascimento == nascimento_inicial
 
-    pagina_edicao = client.get(
-        reverse("rebanho:animal_editar", kwargs={"animal_id": jade.pk})
-    )
+    pagina_edicao = client.get(reverse("rebanho:animal_editar", kwargs={"animal_id": jade.pk}))
     assert pagina_edicao.status_code == 200
     assert f'value="{nascimento_inicial.isoformat()}"' in pagina_edicao.content.decode()
 
@@ -429,9 +409,7 @@ def test_cadastro_de_bezerro_pelo_formulario_principal_associa_a_mae(
     assert bezerro.mae == mae
 
 
-def test_edicao_de_bezerro_troca_a_mae_sem_pedir_justificativa(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
+def test_edicao_de_bezerro_troca_a_mae_sem_pedir_justificativa(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(
         username="editar-bezerro-sem-justificativa",
         password="teste",
@@ -501,100 +479,6 @@ def test_cadastro_rejeita_sexo_incompativel_com_tipo(
     assert not Animal.objects.filter(nome="Cadastro inválido").exists()
 
 
-def test_cadastro_rapido_de_bezerro_aceita_nascimento_informado(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
-    usuario = django_user_model.objects.create_user(username="cadastro-bezerro", password="teste")
-    client.force_login(usuario)
-    mae = animal(nome="Mimosa", tipo_animal=Animal.TipoAnimal.VACA)
-    nascimento = timezone.localdate() - timedelta(days=120)
-
-    resposta = client.post(
-        reverse("rebanho:bezerro_novo"),
-        {
-            "nome": "Pingo",
-            "cor": "Malhado",
-            "sexo": Animal.Sexo.MACHO,
-            "mae": str(mae.pk),
-            "data_nascimento": nascimento.isoformat(),
-        },
-    )
-
-    assert resposta.status_code == 302
-    bezerro = Animal.objects.get(nome="Pingo")
-    assert resposta.url == reverse("rebanho:bezerro_novo")
-    assert bezerro.data_nascimento == nascimento
-    assert bezerro.data_entrada == timezone.localdate()
-    assert bezerro.mae == mae
-    assert bezerro.tipo_animal == Animal.TipoAnimal.BEZERRO
-    assert bezerro.categoria == "Bezerro"
-
-
-def test_cadastro_de_novilha_define_femea_e_permanece_no_formulario(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
-    usuario = django_user_model.objects.create_user(username="cadastro-novilha", password="teste")
-    client.force_login(usuario)
-    nascimento = timezone.localdate() - timedelta(days=365 * 2)
-
-    resposta = client.post(
-        reverse("rebanho:novilha_nova"),
-        {
-            "nome": "Jade",
-            "cor": "Parda",
-            "sexo": Animal.Sexo.MACHO,
-            "data_nascimento": nascimento.strftime("%d/%m/%Y"),
-        },
-    )
-
-    novilha = Animal.objects.get(nome="Jade")
-    assert resposta.status_code == 302
-    assert resposta.url == reverse("rebanho:novilha_nova")
-    assert novilha.sexo == Animal.Sexo.FEMEA
-    assert novilha.data_nascimento == nascimento
-    assert novilha.categoria == "Novilha"
-
-
-def test_cadastro_de_novilha_aceita_data_de_nascimento_vazia(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
-    usuario = django_user_model.objects.create_user(
-        username="cadastro-novilha-sem-data",
-        password="teste",
-    )
-    client.force_login(usuario)
-
-    resposta = client.post(
-        reverse("rebanho:novilha_nova"),
-        {
-            "nome": "Novilha sem data",
-            "cor": "",
-            "sexo": Animal.Sexo.MACHO,
-            "data_nascimento": "",
-        },
-    )
-
-    novilha = Animal.objects.get(nome="Novilha sem data")
-    assert resposta.status_code == 302
-    assert resposta.url == reverse("rebanho:novilha_nova")
-    assert novilha.sexo == Animal.Sexo.FEMEA
-    assert novilha.data_nascimento is None
-
-
-def test_formulario_de_novilha_rejeita_idade_de_bezerra() -> None:
-    formulario = CadastroNovilhaForm(
-        data={
-            "nome": "Muito nova",
-            "cor": "",
-            "sexo": Animal.Sexo.FEMEA,
-            "data_nascimento": timezone.localdate().strftime("%d/%m/%Y"),
-        }
-    )
-
-    assert not formulario.is_valid()
-    assert "data_nascimento" in formulario.errors
-
-
 def test_lista_autenticada_renderiza_e_htmx_retorna_somente_cartoes(
     client, django_user_model
 ) -> None:  # type: ignore[no-untyped-def]
@@ -636,9 +520,7 @@ def test_lista_autenticada_renderiza_e_htmx_retorna_somente_cartoes(
     assert "Cadastrar bezerro" not in detalhe.content.decode()
 
 
-def test_botoes_do_rebanho_filtram_os_quatro_tipos(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
+def test_botoes_do_rebanho_filtram_os_quatro_tipos(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(
         username="filtros-tipo-animal",
         password="teste",
@@ -723,9 +605,7 @@ def test_lista_do_rebanho_exibe_animais_em_tabela_com_foto(client, django_user_m
     assert "animais/mimosa/foto.jpg" in conteudo
 
 
-def test_lista_do_rebanho_nao_exibe_data_de_cobertura_cancelada(
-    client, django_user_model
-) -> None:  # type: ignore[no-untyped-def]
+def test_lista_do_rebanho_nao_exibe_data_de_cobertura_cancelada(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
     usuario = django_user_model.objects.create_user(
         username="lista-cobertura-cancelada",
         password="teste",
@@ -747,9 +627,7 @@ def test_lista_do_rebanho_nao_exibe_data_de_cobertura_cancelada(
     )
 
     resposta = client.get(reverse("rebanho:animais"))
-    animal_listado = next(
-        item for item in resposta.context["animais"] if item.pk == vaca.pk
-    )
+    animal_listado = next(item for item in resposta.context["animais"] if item.pk == vaca.pk)
 
     assert resposta.status_code == 200
     assert animal_listado.data_ultima_cobertura is None

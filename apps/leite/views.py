@@ -21,7 +21,7 @@ from .forms import (
 )
 from .models import DestinoLeite, Ordenha, ProducaoAnimal
 from .selectors import listar_destinos, listar_ordenhas
-from .services import cancelar_ordenha, conciliar_ordenha, vaca_em_carencia
+from .services import cancelar_ordenha, conciliar_ordenha
 
 
 def _data_filtro(valor: str):  # type: ignore[no-untyped-def]
@@ -95,7 +95,7 @@ class ProducaoListView(CadastroListView):
     nome_url_editar = "leite:producao_editar"
 
     def get_queryset(self):  # type: ignore[no-untyped-def]
-        return ProducaoAnimal.objects.select_related("ordenha", "vaca", "lactacao").order_by(
+        return ProducaoAnimal.objects.select_related("ordenha", "vaca").order_by(
             "-ordenha__data", "vaca__identificacao"
         )
 
@@ -121,7 +121,7 @@ class OrdenhaDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):  # type: ignore[no-untyped-def]
         return Ordenha.objects.select_related("lote").prefetch_related(
-            "producoes__vaca", "producoes__lactacao", "destinos"
+            "producoes__vaca", "destinos"
         )
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -136,9 +136,7 @@ class OrdenhaConciliarView(LoginRequiredMixin, View):
 
     def post(self, request: HttpRequest, pk: object) -> HttpResponse:
         ordenha = get_object_or_404(
-            Ordenha.objects.select_related("lote").prefetch_related(
-                "producoes__vaca", "producoes__lactacao", "destinos"
-            ),
+            Ordenha.objects.select_related("lote").prefetch_related("producoes__vaca", "destinos"),
             pk=pk,
             ativo_registro=True,
             modo=Ordenha.Modo.INDIVIDUAL,
@@ -226,13 +224,6 @@ class ProducaoFormView(CadastroFormView):
     sucesso_url = reverse_lazy("leite:producoes")
     mensagem_sucesso = "Produção individual salva com sucesso."
     campos_iniciais_url = ("ordenha", "vaca")
-
-    def apos_salvar(self, request: HttpRequest, objeto: ProducaoAnimal) -> None:
-        if vaca_em_carencia(vaca=objeto.vaca, ordenha=objeto.ordenha):
-            messages.warning(
-                request,
-                "Atenção: esta vaca está em carência. Separe e registre o descarte do leite.",
-            )
 
 
 class DestinoFormView(CadastroFormView):

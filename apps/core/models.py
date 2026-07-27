@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -37,24 +37,14 @@ class SoftDeleteModel(models.Model):
 
 
 class ConfiguracaoSistema(models.Model):
-    """Configuração única da propriedade, editável sem alteração de código."""
+    """Parâmetros internos usados pelos cálculos do sistema."""
 
     id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
     nome_propriedade = models.CharField(max_length=120, default="Minha propriedade")
     gestacao_dias = models.PositiveSmallIntegerField(default=283)
     margem_parto_dias = models.PositiveSmallIntegerField(default=7)
     dias_diagnostico = models.PositiveSmallIntegerField(default=45)
-    dias_secagem = models.PositiveSmallIntegerField(default=60)
-    dias_sem_ordenha_alerta = models.PositiveSmallIntegerField(default=2)
-    antecedencia_alerta_secagem_dias = models.PositiveSmallIntegerField(default=7)
     idade_bezerro_meses = models.PositiveSmallIntegerField(default=12)
-    idade_novilha_meses = models.PositiveSmallIntegerField(default=15)
-    queda_producao_percentual = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal("20.00"),
-        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
-    )
     tolerancia_divergencia_litros = models.DecimalField(
         max_digits=10,
         decimal_places=3,
@@ -67,14 +57,6 @@ class ConfiguracaoSistema(models.Model):
         default=Decimal("2.00"),
         validators=[MinValueValidator(Decimal("0"))],
     )
-    tolerancia_financeira = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("1.00"),
-        validators=[MinValueValidator(Decimal("0"))],
-    )
-    casas_decimais_litros = models.PositiveSmallIntegerField(default=3)
-    casas_decimais_peso = models.PositiveSmallIntegerField(default=3)
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -92,45 +74,6 @@ class ConfiguracaoSistema(models.Model):
     def obter(cls) -> ConfiguracaoSistema:
         objeto, _ = cls.objects.get_or_create(pk=1)
         return objeto
-
-
-class Alerta(TimeStampedUUIDModel):
-    class Nivel(models.TextChoices):
-        INFO = "info", "Informativo"
-        ATENCAO = "atencao", "Atenção"
-        URGENTE = "urgente", "Urgente"
-
-    tipo = models.CharField(max_length=60, db_index=True)
-    nivel = models.CharField(max_length=12, choices=Nivel.choices, default=Nivel.ATENCAO)
-    titulo = models.CharField(max_length=160)
-    mensagem = models.TextField()
-    entidade = models.CharField(max_length=100, blank=True)
-    identificador = models.CharField(max_length=64, blank=True)
-    data_referencia = models.DateField(blank=True, null=True, db_index=True)
-    resolvido = models.BooleanField(default=False, db_index=True)
-    resolvido_em = models.DateTimeField(blank=True, null=True)
-    resolvido_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name="alertas_resolvidos",
-    )
-    chave = models.CharField(max_length=190, unique=True)
-
-    class Meta:
-        ordering = ["resolvido", "data_referencia", "-criado_em"]
-        indexes = [models.Index(fields=["tipo", "resolvido"])]
-
-    def __str__(self) -> str:
-        return self.titulo
-
-    def resolver(self, usuario: object | None = None) -> None:
-        self.resolvido = True
-        self.resolvido_em = timezone.now()
-        if getattr(usuario, "is_authenticated", False):
-            self.resolvido_por = usuario
-        self.save(update_fields=["resolvido", "resolvido_em", "resolvido_por", "atualizado_em"])
 
 
 class ArquivoAnexo(TimeStampedUUIDModel):

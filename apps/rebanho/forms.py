@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django import forms
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
@@ -71,53 +70,7 @@ class AnimalForm(BootstrapFormMixin, forms.ModelForm):
             "identificacao",
             "identificacao_provisoria",
         )
-        self.order_fields(
-            ("nome", "cor", "sexo", "tipo_animal", "data_nascimento", "mae")
-        )
-
-
-class CadastroBezerroForm(AnimalForm):
-    class Meta(AnimalForm.Meta):
-        fields = AnimalForm.Meta.fields
-
-    def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
-        self.fields["tipo_animal"].initial = Animal.TipoAnimal.BEZERRO
-        self.fields["tipo_animal"].widget = forms.HiddenInput()
-        self.fields["tipo_animal"].required = False
-        self.fields["mae"].required = False
-        self.fields["mae"].label = _("Mãe, se conhecida")
-
-    def clean_tipo_animal(self) -> str:
-        return Animal.TipoAnimal.BEZERRO
-
-
-class CadastroNovilhaForm(AnimalForm):
-    class Meta(AnimalForm.Meta):
-        fields = AnimalForm.Meta.fields
-
-    def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
-        self.fields["sexo"].initial = Animal.Sexo.FEMEA
-        self.fields["sexo"].widget = forms.HiddenInput()
-        self.fields["tipo_animal"].initial = Animal.TipoAnimal.NOVILHA
-        self.fields["tipo_animal"].widget = forms.HiddenInput()
-        self.fields["tipo_animal"].required = False
-        self.order_fields(("nome", "cor", "sexo", "tipo_animal", "data_nascimento"))
-
-    def clean_sexo(self) -> str:
-        return Animal.Sexo.FEMEA
-
-    def clean_tipo_animal(self) -> str:
-        return Animal.TipoAnimal.NOVILHA
-
-    def clean_data_nascimento(self):  # type: ignore[no-untyped-def]
-        data_nascimento = self.cleaned_data["data_nascimento"]
-        if data_nascimento and data_nascimento > Animal.data_limite_bezerro():
-            raise ValidationError(
-                _("Pela data informada, este animal ainda pertence à categoria bezerra.")
-            )
-        return data_nascimento
+        self.order_fields(("nome", "cor", "sexo", "tipo_animal", "data_nascimento", "mae"))
 
 
 class InativacaoAnimalForm(BootstrapFormMixin, forms.Form):

@@ -167,10 +167,5 @@ chmod 600 -- "${final_archive}"
 find "${BACKUP_DIR}" -maxdepth 1 -type f -name 'gestao-rural-*.tar.gz' \
     -mtime "+${RETENTION_DAYS}" ! -path "${final_archive}" -print -delete >>"${LOG_FILE}"
 
-"${COMPOSE[@]}" exec -T web \
-    python manage.py registrar_backup_sucesso --arquivo "${archive_name}" \
-    >>"${LOG_FILE}" 2>&1 \
-    || die "o pacote foi criado, mas o marcador operacional não pôde ser atualizado."
-
 log "Backup SQLite concluído e verificado: ${final_archive}"
 printf '%s\n' "${final_archive}"

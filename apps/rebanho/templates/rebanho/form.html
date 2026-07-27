@@ -4,9 +4,6 @@
 {% block content %}
 <section class="surface-card form-card">
   {% if descricao %}<p class="form-intro">{{ descricao }}</p>{% endif %}
-  {% if cadastro_bezerro %}
-    <p class="form-tip">Quer registrar também a mãe e o nascimento? <a href="{% url 'reproducao:parto_novo' %}">Cadastre pelo parto</a>.</p>
-  {% endif %}
   <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     {% if animal and animal.foto %}

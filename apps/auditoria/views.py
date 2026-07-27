@@ -28,10 +28,7 @@ def lista(request: HttpRequest) -> HttpResponse:
             "modulos": (
                 "rebanho",
                 "reproducao",
-                "lactacao",
                 "leite",
-                "financeiro",
-                "saude",
                 "core",
             ),
         },

@@ -58,7 +58,6 @@ def obter_animal(*, animal_id: str) -> Animal:
             "coberturas",
             "diagnosticos_gestacao",
             "partos",
-            "lactacoes",
         )
         .get(pk=animal_id)
     )
@@ -230,43 +229,6 @@ def linha_do_tempo(
             for historico in parto.historico.all()
             if historico.evento == "CANCELAMENTO"
         )
-    for lactacao in animal.lactacoes.all():
-        eventos.append(
-            {
-                "data": momento(lactacao.data_inicio),
-                "tipo": "lactacao",
-                "titulo": "Início da lactação",
-                "descricao": str(lactacao),
-            }
-        )
-        if lactacao.data_secagem:
-            eventos.append(
-                {
-                    "data": momento(lactacao.data_secagem),
-                    "tipo": "lactacao",
-                    "titulo": "Secagem",
-                    "descricao": str(lactacao),
-                }
-            )
-        if lactacao.data_encerramento:
-            eventos.append(
-                {
-                    "data": momento(lactacao.data_encerramento),
-                    "tipo": "lactacao",
-                    "titulo": "Lactação encerrada",
-                    "descricao": str(lactacao),
-                }
-            )
-        if lactacao.situacao == lactacao.Situacao.CANCELADA:
-            eventos.append(
-                {
-                    "data": momento(lactacao.atualizado_em),
-                    "tipo": "cancelamento",
-                    "titulo": "Lactação cancelada",
-                    "descricao": lactacao.motivo_cancelamento,
-                }
-            )
-
     eventos.extend(
         {
             "data": momento(producao.ordenha.data),
@@ -277,19 +239,6 @@ def linha_do_tempo(
         for producao in animal.producoes_leite.select_related("ordenha").filter(
             ordenha__ativo_registro=True
         )
-    )
-    eventos.extend(
-        {
-            "data": momento(tratamento.data_hora),
-            "tipo": "saude",
-            "titulo": (
-                "Tratamento cancelado"
-                if tratamento.situacao == tratamento.Situacao.CANCELADO
-                else tratamento.produto.get_tipo_display()
-            ),
-            "descricao": str(tratamento),
-        }
-        for tratamento in animal.tratamentos.select_related("produto").all()
     )
     eventos.extend(
         {

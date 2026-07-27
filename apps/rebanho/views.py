@@ -14,8 +14,6 @@ from django.views.generic import DetailView, ListView
 
 from .forms import (
     AnimalForm,
-    CadastroBezerroForm,
-    CadastroNovilhaForm,
     InativacaoAnimalForm,
     LoteForm,
     MovimentacaoLoteForm,
@@ -115,38 +113,16 @@ class AnimalDetailView(LoginRequiredMixin, DetailView):
 class AnimalFormView(LoginRequiredMixin, View):
     template_name = "rebanho/form.html"
     animal: Animal | None = None
-    bezerro = False
-    novilha = False
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        self.bezerro = bool(kwargs.get("bezerro"))
-        self.novilha = bool(kwargs.get("novilha"))
         if "animal_id" in kwargs:
             self.animal = get_object_or_404(Animal, pk=kwargs["animal_id"])
         return super().dispatch(request, *args, **kwargs)
-
-    def _form_class(self):  # type: ignore[no-untyped-def]
-        if self.bezerro:
-            return CadastroBezerroForm
-        if self.novilha:
-            return CadastroNovilhaForm
-        return AnimalForm
 
     def _contexto(self, form: AnimalForm) -> dict[str, object]:
         if self.animal:
             titulo = f"Editar {self.animal.nome or 'animal'}"
             descricao = "Altere somente os dados necessários."
-        elif self.bezerro:
-            titulo = "Cadastrar bezerro"
-            descricao = (
-                "Informe nome e sexo. Cor, data de nascimento e mãe são opcionais."
-            )
-        elif self.novilha:
-            titulo = "Cadastrar novilha"
-            descricao = (
-                "Informe o nome. A data de nascimento é opcional e o sexo será registrado "
-                "como fêmea."
-            )
         else:
             titulo = "Cadastrar animal"
             descricao = (
@@ -158,36 +134,16 @@ class AnimalFormView(LoginRequiredMixin, View):
             "animal": self.animal,
             "titulo": titulo,
             "descricao": descricao,
-            "cadastro_bezerro": self.bezerro,
-            "cadastro_novilha": self.novilha,
         }
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        initial = {}
-        if self.bezerro and request.GET.get("mae"):
-            initial["mae"] = get_object_or_404(
-                Animal,
-                pk=request.GET["mae"],
-                sexo=Animal.Sexo.FEMEA,
-                situacao=Animal.Situacao.ATIVO,
-            )
-        form = self._form_class()(instance=self.animal, initial=initial)
+        form = AnimalForm(instance=self.animal)
         return render(request, self.template_name, self._contexto(form))
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        form = self._form_class()(request.POST, request.FILES, instance=self.animal)
+        form = AnimalForm(request.POST, request.FILES, instance=self.animal)
         if form.is_valid():
             dados = _dados_model_form(form)
-            if self.bezerro and self.animal is None:
-                hoje = timezone.localdate()
-                dados.update(
-                    {
-                        "data_entrada": hoje,
-                        "origem": Animal.Origem.NASCIDO_SITIO,
-                    }
-                )
-            elif self.novilha and self.animal is None:
-                dados["sexo"] = Animal.Sexo.FEMEA
             try:
                 salvar_animal(
                     animal=self.animal,

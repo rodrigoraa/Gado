@@ -13,9 +13,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("lactacao", "0001_initial"),
         ("rebanho", "0001_initial"),
-        ("saude", "0001_initial"),
     ]
 
     operations = [
@@ -204,17 +202,6 @@ class Migration(migrations.Migration):
                     models.TextField(blank=True, verbose_name="observações"),
                 ),
                 (
-                    "tratamento",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="descartes_leite",
-                        to="saude.tratamento",
-                        verbose_name="tratamento relacionado",
-                    ),
-                ),
-                (
                     "ordenha",
                     models.ForeignKey(
                         blank=True,
@@ -260,15 +247,6 @@ class Migration(migrations.Migration):
                 (
                     "observacoes",
                     models.TextField(blank=True, verbose_name="observações"),
-                ),
-                (
-                    "lactacao",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="producoes",
-                        to="lactacao.lactacao",
-                        verbose_name="lactação",
-                    ),
                 ),
                 (
                     "ordenha",
@@ -336,10 +314,6 @@ class Migration(migrations.Migration):
             index=models.Index(
                 fields=["vaca", "ordenha"], name="leite_prod_vaca_ord_idx"
             ),
-        ),
-        migrations.AddIndex(
-            model_name="producaoanimal",
-            index=models.Index(fields=["lactacao"], name="leite_prod_lactacao_idx"),
         ),
         migrations.AddConstraint(
             model_name="producaoanimal",

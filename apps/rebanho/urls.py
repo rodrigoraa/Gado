@@ -8,18 +8,6 @@ urlpatterns = [
     path("", views.AnimalListView.as_view(), name="animais"),
     path("animais/novo/", views.AnimalFormView.as_view(), name="animal_novo"),
     path(
-        "bezerros/novo/",
-        views.AnimalFormView.as_view(),
-        {"bezerro": True},
-        name="bezerro_novo",
-    ),
-    path(
-        "novilhas/nova/",
-        views.AnimalFormView.as_view(),
-        {"novilha": True},
-        name="novilha_nova",
-    ),
-    path(
         "animais/<uuid:animal_id>/",
         views.AnimalDetailView.as_view(),
         name="animal_detalhe",

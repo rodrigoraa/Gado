@@ -17,18 +17,14 @@ comunicam pelas redes Docker.
 - Histórico de movimentações e pesagens, idade calculada e linha do tempo.
 - Coberturas, diagnósticos, perdas gestacionais, previsão de parto e partos.
 - Cadastro transacional de um ou mais bezerros e vínculo com mãe e pai.
-- Lactações, secagem, ordenhas totais ou individuais e produção por vaca.
-- Destino e conciliação do leite produzido, armazenado, descartado ou entregue.
-- Um laticínio ativo, histórico de preços, entregas, fechamentos e recebimentos.
-- Medicamentos, tratamentos e períodos de carência.
-- Dashboard, alertas operacionais, auditoria e relatórios em tela, PDF e XLSX.
-- Health checks de processo e banco, dados de demonstração e comandos de
-  verificação para cron ou systemd timer.
+- Ordenhas totais ou individuais e produção por vaca.
+- Destino e conciliação do leite produzido, armazenado, descartado ou consumido.
+- Dashboard, auditoria e relatórios em tela, PDF e XLSX.
+- Health checks de processo e banco.
 - Backup consistente e verificado de SQLite e mídia, com retenção e restauração protegida.
 
-As operações históricas e financeiras usam cancelamento lógico e justificativa
-quando aplicável. Dinheiro, litros e peso são tratados com `Decimal`, nunca com
-`float`.
+As operações históricas usam cancelamento lógico quando aplicável. Litros e
+peso são tratados com `Decimal`, nunca com `float`.
 
 ## Stack
 
@@ -143,8 +139,6 @@ Variáveis essenciais:
 | `MAX_UPLOAD_BYTES` | limite global de upload em bytes |
 | `GESTACAO_DIAS_PADRAO` | duração inicial da gestação, padrão 283 |
 | `MARGEM_PARTO_DIAS_PADRAO` | margem anterior e posterior, padrão 7 |
-| `BACKUP_MAX_AGE_HOURS` | idade máxima do último backup confirmado, padrão 36 horas |
-| `DISK_MIN_FREE_PERCENT` | percentual livre mínimo no volume monitorado, padrão 10% |
 
 Use listas separadas por vírgula, sem aspas adicionais:
 
@@ -276,17 +270,6 @@ docker compose exec web python manage.py showmigrations
 docker compose exec web python manage.py makemigrations --check --dry-run
 ```
 
-## Dados de demonstração
-
-Use dados fictícios somente em desenvolvimento ou homologação:
-
-```bash
-python manage.py seed_demo
-```
-
-O comando é idempotente para evitar duplicação acidental. Não execute em uma
-base real sem confirmar previamente o ambiente e possuir backup.
-
 ## Desenvolvimento local
 
 Crie o ambiente virtual. O desenvolvimento usa `db.sqlite3` na raiz do projeto:
@@ -325,9 +308,8 @@ python manage.py createsuperuser
 python manage.py runserver 127.0.0.1:8000
 ```
 
-Não execute `seed_demo` se quiser começar com a base vazia. Depois das migrations,
-somente as tabelas e metadados internos do Django existem; crie apenas o usuário
-administrador necessário para entrar.
+Depois das migrations, somente as tabelas e metadados internos do Django existem;
+crie apenas o usuário administrador necessário para entrar.
 
 No Windows, use o PowerShell na raiz do projeto:
 
@@ -366,38 +348,6 @@ python manage.py check --deploy --settings=config.settings.production
 Para `check --deploy`, exporte antes uma chave e domínio fictícios seguros, sem
 apontar para produção. A configuração de testes usa SQLite isolado em memória.
 
-## Comandos administrativos
-
-Os comandos foram preparados para execução manual, cron ou systemd timer, sem
-Celery:
-
-```bash
-python manage.py verificar_alertas
-python manage.py verificar_partos
-python manage.py verificar_carencias
-python manage.py verificar_queda_producao
-python manage.py gerar_relatorio_mensal
-python manage.py verificar_integridade
-```
-
-No servidor Docker, prefixe com `docker compose exec -T web`. Não permita
-execuções simultâneas do mesmo comando; use `flock` no cron quando necessário e
-registre a saída no journal ou em diretório protegido.
-
-`verificar_alertas` também confere a idade do último backup e o espaço livre no
-volume configurado. Por padrão, o marcador fica em
-`/app/media/.sistema/ultimo_backup.json` no Docker e o próprio volume de mídia é
-medido. Ajuste `BACKUP_STATUS_FILE` e `DISK_MONITOR_PATH` somente para caminhos
-acessíveis pelo container `web`; os monitores podem ser desativados
-individualmente com `BACKUP_MONITOR_ENABLED=false` ou
-`DISK_MONITOR_ENABLED=false`.
-
-Exemplo de verificação a cada 15 minutos:
-
-```cron
-*/15 * * * * cd /srv/gestao-rural && /usr/bin/flock -n /run/lock/gestao-rural-alertas.lock /usr/bin/docker compose exec -T web python manage.py verificar_alertas
-```
-
 ## Backup
 
 O backup contém:
@@ -412,9 +362,7 @@ O script usa diretório temporário, não substitui arquivo existente e só apli
 retenção a arquivos `gestao-rural-*.tar.gz`. A aplicação precisa estar em execução
 e a imagem `web` precisa ter sido construída. A cópia passa por
 `PRAGMA integrity_check`. Depois de publicar e verificar o
-pacote, ele atualiza atomicamente o marcador usado pelo alerta operacional; uma
-falha anterior a essa etapa deixa o marcador antigo, permitindo detectar o
-atraso na próxima execução de `verificar_alertas`.
+pacote, ele encerra somente depois de todas as verificações serem concluídas.
 
 ```bash
 BACKUP_DIR=/mnt/backup-gestao-rural \
@@ -600,17 +548,12 @@ de tentar reverter migrations manualmente sem um plano testado.
 - Coberturas e previsões originais permanecem no histórico; cancelamentos e
   correções relevantes exigem justificativa.
 - Parto, bezerros, parentesco, cobertura e histórico são gravados em transação.
-- Uma vaca não possui duas lactações ativas.
-- Produções, destinos, entregas e fechamentos são entidades distintas e
-  conciliadas, sem assumir que produzido significa vendido.
-- O preço da entrega é preservado no registro histórico.
-- Só pode existir um laticínio ativo.
-- Medicamentos calculam carência e destacam leite que não pode ser vendido.
+- Produções e destinos são entidades distintas e conciliadas.
 - Registros históricos não são apagados fisicamente pela operação normal.
 
 ## Limitações deliberadas da primeira versão
 
-- uma propriedade, um usuário principal e um laticínio ativo;
+- uma propriedade e um usuário principal;
 - um banco e uma aplicação monolítica;
 - sem multitenancy, API pública, frontend separado ou JWT para a interface;
 - sem Redis, Celery, filas ou microsserviços;
@@ -699,7 +642,7 @@ restaurável.
 - [ ] login, alteração de senha e proteção das rotas validados;
 - [ ] health checks sem informação sensível;
 - [ ] PDF, XLSX, upload JPG/PNG/PDF e visualização privada testados;
-- [ ] cálculos financeiros e de produção revisados com `Decimal`;
+- [ ] cálculos de produção revisados com `Decimal`;
 - [ ] fuso `America/Campo_Grande` conferido no servidor e aplicação;
 - [ ] visualização em celular testada;
 - [ ] nenhum mapeamento público para 8000, 80 ou 443;

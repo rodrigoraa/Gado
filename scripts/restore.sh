@@ -162,17 +162,13 @@ log "Substituindo o banco SQLite e o volume de mídia."
             --no-same-owner --no-same-permissions
     ' >>"${LOG_FILE}" 2>&1 || die "a substituição dos dados falhou."
 
-log "Aplicando migrations e registrando o backup restaurado."
+log "Aplicando migrations após restaurar o backup."
 "${COMPOSE[@]}" run --rm --no-deps -T web \
     python manage.py migrate --noinput >>"${LOG_FILE}" 2>&1 \
     || die "as migrations falharam após a restauração."
 "${COMPOSE[@]}" run --rm --no-deps -T web \
     python manage.py collectstatic --noinput >>"${LOG_FILE}" 2>&1 \
     || die "collectstatic falhou após a restauração."
-"${COMPOSE[@]}" run --rm --no-deps -T web \
-    python manage.py registrar_backup_sucesso --arquivo "${archive##*/}" \
-    >>"${LOG_FILE}" 2>&1 || die "o marcador do backup não pôde ser atualizado."
-
 log "Reiniciando aplicação, proxy e túnel."
 "${COMPOSE[@]}" up --detach web proxy cloudflared >>"${LOG_FILE}" 2>&1 \
     || die "os dados foram restaurados, mas os serviços não reiniciaram."

@@ -1,4 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ titulo }} — Gestão Rural{% endblock %}
-{% block page_title %}{{ titulo }}{% endblock %}
-{% block content %}<section class="surface-card form-card"><form method="post" novalidate>{% csrf_token %}{% include "shared/form_fields.html" %}<div class="form-actions"><a class="btn-app btn-ghost" href="{% url 'lactacao:lista' %}">Voltar</a><button class="btn-app btn-primary-app" type="submit">Salvar</button></div></form></section>{% endblock %}

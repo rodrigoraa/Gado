@@ -7,8 +7,6 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.financeiro.models import FechamentoLeite, Laticinio, RecebimentoLeite
-from apps.lactacao.models import Lactacao
 from apps.leite.forms import ProducaoAnimalForm
 from apps.leite.models import Ordenha
 from apps.leite.services import registrar_producao, salvar_ordenha
@@ -30,9 +28,7 @@ def criar_animal(*, identificacao: str, sexo: str = Animal.Sexo.FEMEA) -> Animal
         identificacao=identificacao,
         sexo=sexo,
         tipo_animal=(
-            Animal.TipoAnimal.VACA
-            if sexo == Animal.Sexo.FEMEA
-            else Animal.TipoAnimal.BOI
+            Animal.TipoAnimal.VACA if sexo == Animal.Sexo.FEMEA else Animal.TipoAnimal.BOI
         ),
         data_nascimento=timezone.localdate() - timedelta(days=365 * 3),
         situacao=Animal.Situacao.ATIVO,
@@ -57,14 +53,8 @@ def test_navegacao_e_retornos_continuam_utilizaveis_sem_javascript(
         reverse("relatorios:index"),
     ):
         assert f'href="{destino}"' in conteudo
-    for destino_removido in (
-        reverse("lactacao:lista"),
-        reverse("saude:inicio"),
-        reverse("financeiro:inicio"),
-        reverse("core:alertas"),
-        reverse("core:configuracoes"),
-    ):
-        assert f'href="{destino_removido}"' not in conteudo
+    for opcao_removida in ("Lactações", "Saúde", "Financeiro", "Alertas", "Configurações"):
+        assert opcao_removida not in conteudo
     assert '<details class="mobile-more">' in conteudo
 
     formulario = client.get(reverse("rebanho:animal_novo"))
@@ -124,12 +114,8 @@ def test_formulario_de_parto_oferece_fallback_para_gemeos_e_cadastra_duas_crias(
     )
     assert parto.quantidade_bezerros == 2
     assert Animal.objects.filter(mae=vaca, pai=touro, nascimento__parto=parto).count() == 2
-    detalhe_parto = client.get(
-        reverse("reproducao:parto_detalhe", kwargs={"parto_id": parto.pk})
-    )
-    assert reverse("lactacao:nova_do_parto", kwargs={"parto_id": parto.pk}) not in (
-        detalhe_parto.content.decode()
-    )
+    detalhe_parto = client.get(reverse("reproducao:parto_detalhe", kwargs={"parto_id": parto.pk}))
+    assert "Iniciar lactação" not in detalhe_parto.content.decode()
 
 
 def test_segunda_ficha_vazia_do_parto_sem_javascript_e_ignorada() -> None:
@@ -170,12 +156,11 @@ def test_listas_htmx_nao_interceptam_links_para_paginas_completas(
 ) -> None:  # type: ignore[no-untyped-def]
     autenticar(client, django_user_model, username="htmx-ui")
 
-    for nome_rota in ("leite:ordenhas", "financeiro:entregas"):
-        resposta = client.get(reverse(nome_rota), HTTP_HX_REQUEST="true")
-        conteudo = resposta.content.decode()
-        assert resposta.status_code == 200
-        assert 'id="lista-registros"' in conteudo
-        assert "hx-boost" not in conteudo
+    resposta = client.get(reverse("leite:ordenhas"), HTTP_HX_REQUEST="true")
+    conteudo = resposta.content.decode()
+    assert resposta.status_code == 200
+    assert 'id="lista-registros"' in conteudo
+    assert "hx-boost" not in conteudo
 
 
 def test_conciliacao_individual_registra_automaticamente_e_filtra_vacas(
@@ -183,23 +168,15 @@ def test_conciliacao_individual_registra_automaticamente_e_filtra_vacas(
 ) -> None:  # type: ignore[no-untyped-def]
     autenticar(client, django_user_model, username="conciliacao-ui")
     vaca_ativa = criar_animal(identificacao="V-ATIVA-UI")
-    vaca_seca = criar_animal(identificacao="V-SECA-UI")
-    Lactacao.objects.create(
-        vaca=vaca_ativa,
-        ordem=1,
-        data_inicio=timezone.localdate() - timedelta(days=30),
-        situacao=Lactacao.Situacao.ATIVA,
-    )
-    Lactacao.objects.create(
-        vaca=vaca_seca,
-        ordem=1,
-        data_inicio=timezone.localdate() - timedelta(days=60),
-        data_secagem=timezone.localdate() - timedelta(days=2),
-        situacao=Lactacao.Situacao.SECA,
+    vaca_inativa = criar_animal(identificacao="V-INATIVA-UI")
+    Animal.objects.filter(pk=vaca_inativa.pk).update(
+        situacao=Animal.Situacao.VENDIDO,
+        data_saida=timezone.localdate(),
+        motivo_saida="Venda",
     )
     escolhas = set(ProducaoAnimalForm().fields["vaca"].queryset.values_list("pk", flat=True))
     assert vaca_ativa.pk in escolhas
-    assert vaca_seca.pk not in escolhas
+    assert vaca_inativa.pk not in escolhas
 
     ordenha = salvar_ordenha(
         data=timezone.localdate(),
@@ -223,29 +200,3 @@ def test_conciliacao_individual_registra_automaticamente_e_filtra_vacas(
     assert ordenha.justificativa_divergencia == (
         "Alteração registrada automaticamente pelo sistema."
     )
-
-
-def test_lista_de_recebimentos_expoe_download_do_anexo(client, django_user_model) -> None:  # type: ignore[no-untyped-def]
-    autenticar(client, django_user_model, username="recebimento-ui")
-    hoje = timezone.localdate()
-    laticinio = Laticinio.objects.create(razao_social="Comprador UI", ativo=True)
-    fechamento = FechamentoLeite.objects.create(
-        laticinio=laticinio,
-        competencia=hoje.replace(day=1),
-        data_inicial=hoje.replace(day=1),
-        data_final=hoje,
-    )
-    recebimento = RecebimentoLeite.objects.create(
-        fechamento=fechamento,
-        data=hoje,
-        valor=Decimal("25.00"),
-        forma_pagamento=RecebimentoLeite.FormaPagamento.PIX,
-        anexo="financeiro/recebimentos/comprovante-ui.pdf",
-    )
-
-    resposta = client.get(reverse("financeiro:recebimentos"))
-    url_anexo = reverse("financeiro:arquivo_privado", args=("recebimento", recebimento.pk))
-
-    assert resposta.status_code == 200
-    assert "Baixar anexo" in resposta.content.decode()
-    assert f'href="{url_anexo}"' in resposta.content.decode()
